@@ -1,0 +1,91 @@
+[gd_scene format=3 uid="uid://lufcfi24sm2q"]
+
+[ext_resource type="Shader" uid="uid://c0i8oosrj756c" path="res://shaders/sky_countryside.gdshader" id="1_sky"]
+[ext_resource type="Script" uid="uid://c0lpqs2wx2d8g" path="res://scripts/rural_base.gd" id="2_base"]
+[ext_resource type="Script" uid="uid://b3ks3umc57wxa" path="res://scripts/country_terrain.gd" id="3_terrain"]
+[ext_resource type="Script" uid="uid://c6ayw2pmovv13" path="res://scripts/country_road.gd" id="4_road"]
+[ext_resource type="Script" uid="uid://wwjmdbo3q686" path="res://scripts/country_fences.gd" id="5_fences"]
+[ext_resource type="Script" uid="uid://dm2n82ijuss4u" path="res://scripts/country_vegetation.gd" id="6_vegetation"]
+[ext_resource type="Script" uid="uid://d2lusy7blc3r5" path="res://scripts/farmstead.gd" id="7_farmstead"]
+[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="8_player"]
+[ext_resource type="PackedScene" path="res://scenes/BaseVehicle.tscn" id="9_vehicle"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
+shader = ExtResource("1_sky")
+shader_parameter/zenith_color = Color(0.16, 0.35, 0.66, 1)
+shader_parameter/horizon_color = Color(0.66, 0.78, 0.9, 1)
+shader_parameter/haze_color = Color(0.76, 0.81, 0.84, 1)
+shader_parameter/ground_color = Color(0.24, 0.28, 0.18, 1)
+shader_parameter/cloud_light = Color(1, 0.99, 0.96, 1)
+shader_parameter/cloud_shadow = Color(0.5, 0.56, 0.67, 1)
+shader_parameter/sun_color = Color(1, 0.87, 0.68, 1)
+shader_parameter/cloud_coverage = 0.49
+shader_parameter/cloud_scale = 3.0
+shader_parameter/cloud_softness = 0.08
+shader_parameter/cloud_speed = 0.003
+shader_parameter/sun_size = 1500.0
+
+[sub_resource type="Sky" id="Sky_main"]
+sky_material = SubResource("ShaderMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 2
+sky = SubResource("Sky_main")
+ambient_light_source = 3
+ambient_light_energy = 0.72
+reflected_light_source = 2
+tonemap_mode = 2
+ssao_enabled = true
+ssao_radius = 1.6
+ssao_intensity = 1.35
+glow_enabled = true
+glow_intensity = 0.25
+glow_bloom = 0.02
+glow_hdr_threshold = 1.15
+fog_enabled = true
+fog_light_color = Color(0.74, 0.8, 0.86, 1)
+fog_light_energy = 0.9
+fog_sun_scatter = 0.25
+fog_density = 0.0005
+fog_aerial_perspective = 0.25
+fog_sky_affect = 0.1
+adjustment_enabled = true
+adjustment_contrast = 1.06
+adjustment_saturation = 1.16
+
+[node name="RuralBase" type="Node3D" unique_id=1532164573]
+script = ExtResource("2_base")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1896201774]
+environment = SubResource("Environment_main")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1152824643]
+transform = Transform3D(0.57357645, 0.52654076, -0.62750685, 0, 0.76604444, 0.6427876, 0.81915206, -0.3686878, 0.43938506, 0, 0, 0)
+light_color = Color(1, 0.92, 0.78, 1)
+light_energy = 1.5
+shadow_enabled = true
+shadow_bias = 0.04
+shadow_normal_bias = 1.4
+directional_shadow_max_distance = 190.0
+
+[node name="Terrain" type="Node3D" parent="." unique_id=754614459]
+script = ExtResource("3_terrain")
+
+[node name="Road" type="Node3D" parent="." unique_id=700693744]
+script = ExtResource("4_road")
+
+[node name="Fences" type="Node3D" parent="." unique_id=889106478]
+script = ExtResource("5_fences")
+
+[node name="Vegetation" type="Node3D" parent="." unique_id=115586624]
+script = ExtResource("6_vegetation")
+
+[node name="Farmstead" type="Node3D" parent="." unique_id=620302168]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.32871184, 0)
+script = ExtResource("7_farmstead")
+
+[node name="Player" parent="." unique_id=165194573 instance=ExtResource("8_player")]
+transform = Transform3D(0.99280864, 0, -0.119712204, 0, 1, 0, 0.119712204, 0, 0.99280864, 1.2, 0.2, 124.5)
+
+[node name="BaseVehicle" parent="." unique_id=1056092871 instance=ExtResource("9_vehicle")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.3, 0.75, 120.5)

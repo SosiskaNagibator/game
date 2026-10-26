@@ -1,0 +1,57 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_player"]
+albedo_color = Color(0.22, 0.45, 0.72, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
+material = SubResource("StandardMaterial3D_player")
+radius = 0.35
+height = 1.8
+
+[node name="Player" type="CharacterBody3D" groups=["player"]]
+floor_snap_length = 0.3
+script = ExtResource("1_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_player")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.9, 0)
+cast_shadow = 2
+mesh = SubResource("CapsuleMesh_player")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 1.6, 0)
+current = true
+fov = 75.0
+near = 0.05
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Hint" type="Label" parent="HUD"]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -250.0
+offset_top = -90.0
+offset_right = 250.0
+offset_bottom = -55.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "[E] Сесть в машину"
+horizontal_alignment = 1
