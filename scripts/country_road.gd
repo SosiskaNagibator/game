@@ -6,7 +6,7 @@ const ROAD_SHADER := preload("res://shaders/road_gravel.gdshader")
 
 @export var start_z: float = 320.0
 @export var end_z: float = -380.0
-@export var segment_length: float = 2.0
+@export var segment_length: float = 1.0
 @export var width: float = 7.8
 @export var surface_offset: float = 0.045
 
@@ -18,7 +18,10 @@ func _ready() -> void:
 
 
 func _build() -> void:
-	var offsets: Array[float] = [-3.9, -2.9, -1.7, -0.75, 0.0, 0.75, 1.7, 2.9, 3.9]
+	var offsets: Array[float] = [
+		-3.9, -3.4, -2.9, -2.3, -1.7, -1.2, -0.75, -0.35, 0.0,
+		0.35, 0.75, 1.2, 1.7, 2.3, 2.9, 3.4, 3.9
+	]
 	var rows: Array[float] = []
 	var z: float = start_z
 	while z >= end_z:
