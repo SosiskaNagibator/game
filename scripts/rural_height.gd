@@ -13,6 +13,9 @@ const FENCE_OFFSET := 6.4
 const YARD_CENTER := Vector2(25.0, 98.0)
 const YARD_HALF := Vector2(18.0, 18.0)
 const YARD_FEATHER := 5.5
+# Цвет площадки растекается по земле гораздо уже, чем сам рельеф:
+# иначе вокруг двора получается широкое бледное «гало».
+const YARD_COLOR_FEATHER := 2.2
 
 static var _base_noise: FastNoiseLite
 static var _micro_noise: FastNoiseLite
@@ -62,6 +65,14 @@ static func yard_mask(x: float, z: float) -> float:
 	var dz: float = maxf(absf(z - YARD_CENTER.y) - YARD_HALF.y, 0.0)
 	var distance: float = sqrt(dx * dx + dz * dz)
 	return 1.0 - smoothstep(0.0, YARD_FEATHER, distance)
+
+
+## Более узкая маска для цвета земли: двор не «расплывается» на газон.
+static func yard_color_mask(x: float, z: float) -> float:
+	var dx: float = maxf(absf(x - YARD_CENTER.x) - YARD_HALF.x, 0.0)
+	var dz: float = maxf(absf(z - YARD_CENTER.y) - YARD_HALF.y, 0.0)
+	var distance: float = sqrt(dx * dx + dz * dz)
+	return 1.0 - smoothstep(0.0, YARD_COLOR_FEATHER, distance)
 
 
 ## Высота земли в мировых координатах.

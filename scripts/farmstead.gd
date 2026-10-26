@@ -28,6 +28,8 @@ var _unit_cylinder: CylinderMesh
 var _unit_cone: CylinderMesh
 var _unit_sphere: SphereMesh
 
+var _hay_colliders: Array[Dictionary] = []
+
 @export var snap_to_yard: bool = true
 
 
@@ -101,9 +103,13 @@ func _create_materials() -> void:
 
 	_gravel_mat = ShaderMaterial.new()
 	_gravel_mat.shader = ROAD_SHADER
+	_gravel_mat.set_shader_parameter("gravel_light", Color(0.43, 0.37, 0.28))
+	_gravel_mat.set_shader_parameter("gravel_dark", Color(0.25, 0.21, 0.155))
+	_gravel_mat.set_shader_parameter("track_color", Color(0.35, 0.30, 0.23))
+	_gravel_mat.set_shader_parameter("edge_color", Color(0.30, 0.25, 0.19))
 	_gravel_mat.set_shader_parameter("track_strength", 0.0)
-	_gravel_mat.set_shader_parameter("edge_strength", 0.15)
-	_gravel_mat.set_shader_parameter("pebble_amount", 0.45)
+	_gravel_mat.set_shader_parameter("edge_strength", 0.0)
+	_gravel_mat.set_shader_parameter("pebble_amount", 0.32)
 
 
 func _standard(color: Color, roughness: float, metallic: float = 0.0) -> StandardMaterial3D:
@@ -115,17 +121,73 @@ func _standard(color: Color, roughness: float, metallic: float = 0.0) -> Standar
 
 
 func _build_yard() -> void:
-	# Гравийная площадка: плоская плита чуть выше рельефа.
+	# Гравийная площадка с неровной скруглённой кромкой. Края плавно
+	# уходят под землю, поэтому нет резкого прямоугольника и светлой каймы.
 	var pad := MeshInstance3D.new()
 	pad.name = "YardGravel"
-	pad.mesh = _unit_box
+	pad.mesh = _make_yard_mesh()
 	pad.material_override = _gravel_mat
-	pad.transform = Transform3D(
-		Basis.IDENTITY.scaled(Vector3(36.4, 0.10, 36.4)),
-		Vector3(RuralHeight.YARD_CENTER.x, 0.02, RuralHeight.YARD_CENTER.y)
-	)
 	pad.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(pad)
+
+
+func _make_yard_mesh() -> ArrayMesh:
+	var segments := 96
+	var rings := 7
+	var radius_x := 20.2
+	var radius_z := 19.4
+	var center := RuralHeight.YARD_CENTER
+	var top_y := 0.055
+
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	st.set_uv(Vector2(0.5, 0.5))
+	st.add_vertex(Vector3(center.x, top_y, center.y))
+
+	for ring in range(1, rings + 1):
+		var t: float = float(ring) / float(rings)
+		# Плоское полотно, у самой кромки уходящее под рельеф.
+		var fall: float = smoothstep(0.86, 1.0, t)
+		for i in segments:
+			var ang: float = TAU * float(i) / float(segments)
+			# Суперэллипс — скруглённый прямоугольник.
+			var n_exp := 4.0
+			var ca: float = absf(cos(ang) / radius_x)
+			var sa: float = absf(sin(ang) / radius_z)
+			var r: float = pow(pow(ca, n_exp) + pow(sa, n_exp), -1.0 / n_exp)
+			# Живая, чуть неровная кромка вместо линейки.
+			r *= (1.0 + 0.05 * sin(ang * 3.0 + 0.7) + 0.025 * sin(ang * 7.0 - 1.3)) * t
+
+			var x: float = center.x + cos(ang) * r
+			var z: float = center.y + sin(ang) * r
+			var ground: float = RuralHeight.terrain_height(x, z) - RuralHeight.yard_height()
+			var y: float = lerpf(top_y, ground - 0.05, fall)
+
+			st.set_uv(Vector2(x - center.x, z - center.y) / (2.0 * radius_x) + Vector2(0.5, 0.5))
+			st.add_vertex(Vector3(x, y, z))
+
+	for i in segments:
+		var nxt: int = (i + 1) % segments
+		st.add_index(0)
+		st.add_index(1 + nxt)
+		st.add_index(1 + i)
+
+	for ring in range(rings - 1):
+		var inner: int = 1 + ring * segments
+		var outer: int = inner + segments
+		for i in segments:
+			var nxt: int = (i + 1) % segments
+			st.add_index(inner + i)
+			st.add_index(inner + nxt)
+			st.add_index(outer + i)
+
+			st.add_index(inner + nxt)
+			st.add_index(outer + nxt)
+			st.add_index(outer + i)
+
+	st.generate_normals()
+	return st.commit()
 
 
 func _build_barn() -> void:
@@ -150,11 +212,11 @@ func _build_barn() -> void:
 		_box(barn, Vector3(slope_length, 0.22, 15.0), center, _roof_mat, "BarnRoof", rot)
 		_box(
 			barn, Vector3(slope_length, 0.16, 0.12),
-			Vector3(side * 3.3, 8.45, 7.06), _white_mat, "Bargeboard", rot
+			Vector3(side * 3.3, 8.45, 7.56), _white_mat, "Bargeboard", rot
 		)
 		_box(
 			barn, Vector3(slope_length, 0.16, 0.12),
-			Vector3(side * 3.3, 8.45, -7.06), _white_mat, "Bargeboard", rot
+			Vector3(side * 3.3, 8.45, -7.56), _white_mat, "Bargeboard", rot
 		)
 
 	# Угловые доски.
@@ -198,13 +260,13 @@ func _build_barn() -> void:
 			_box(barn, Vector3(0.17, 1.35, 1.35), Vector3(sx * 6.08, 3.6, z), _glass_mat, "WindowGlass")
 
 	# Купол-фонарь и флюгер.
-	_box(barn, Vector3(1.8, 1.2, 1.8), Vector3(0.0, 10.7, 0.0), _white_mat, "Cupola")
+	_box(barn, Vector3(1.8, 1.2, 1.8), Vector3(0.0, 10.9, 0.0), _white_mat, "Cupola")
 	var cupola_roof := PrismMesh.new()
 	cupola_roof.size = Vector3(2.3, 1.0, 2.3)
-	_mesh_node(barn, cupola_roof, Vector3(0.0, 11.75, 0.0), _roof_mat, "CupolaRoof")
-	_cylinder(barn, 0.07, 1.5, Vector3(0.0, 12.6, 0.0), _dark_metal_mat, "VanePole")
-	_box(barn, Vector3(1.0, 0.06, 0.06), Vector3(0.25, 12.95, 0.0), _dark_metal_mat, "VaneArrow")
-	_box(barn, Vector3(0.3, 0.28, 0.04), Vector3(0.65, 12.95, 0.0), _dark_metal_mat, "VaneTail")
+	_mesh_node(barn, cupola_roof, Vector3(0.0, 11.95, 0.0), _roof_mat, "CupolaRoof")
+	_cylinder(barn, 0.07, 1.5, Vector3(0.0, 12.8, 0.0), _dark_metal_mat, "VanePole")
+	_box(barn, Vector3(1.0, 0.06, 0.06), Vector3(0.25, 13.15, 0.0), _dark_metal_mat, "VaneArrow")
+	_box(barn, Vector3(0.3, 0.28, 0.04), Vector3(0.65, 13.15, 0.0), _dark_metal_mat, "VaneTail")
 
 
 func _build_silos() -> void:
@@ -262,12 +324,13 @@ func _build_loading_dock() -> void:
 	_label(dock, "LOADING DOCK", Vector3(0.0, 5.16, 4.37), 0.0065, Color(0.12, 0.18, 0.12), 720, 48)
 
 	# Ящики, паллеты и бочки на площадке.
-	_crate(dock, Vector3(-2.4, 1.55, -1.2), Vector3(1.5, 1.1, 1.4))
-	_crate(dock, Vector3(-0.9, 1.4, -1.6), Vector3(1.1, 0.8, 1.1))
-	_crate(dock, Vector3(-2.6, 2.55, -1.1), Vector3(1.0, 0.9, 0.9), Vector3(0.0, 12.0, 0.0))
-	_crate(dock, Vector3(2.6, 1.5, 1.4), Vector3(1.4, 1.0, 1.2))
-	_pallet(dock, Vector3(1.0, 1.25, 2.0), 0.0)
-	_pallet(dock, Vector3(3.2, 1.35, 0.6), 20.0)
+	# Ящики стоят на настиле дока (верх плиты — y = 1.15), а не утопают в нём.
+	_crate(dock, Vector3(-2.4, 1.70, -1.2), Vector3(1.5, 1.1, 1.4))
+	_crate(dock, Vector3(-0.9, 1.55, -1.6), Vector3(1.1, 0.8, 1.1))
+	_crate(dock, Vector3(-2.6, 2.70, -1.1), Vector3(1.0, 0.9, 0.9), Vector3(0.0, 12.0, 0.0))
+	_crate(dock, Vector3(2.6, 1.65, 1.4), Vector3(1.4, 1.0, 1.2))
+	_pallet(dock, Vector3(1.0, 1.20, 2.0), 0.0)
+	_pallet(dock, Vector3(3.2, 1.20, 0.6), 20.0)
 	_barrel(dock, Vector3(3.5, 1.65, -2.0), _barrel_mat)
 	_barrel(dock, Vector3(2.85, 1.65, -2.2), _barrel_mat)
 
@@ -291,9 +354,11 @@ func _build_scale() -> void:
 	scale_root.add_child(kiosk)
 	_box(kiosk, Vector3(1.9, 2.7, 2.0), Vector3(0.0, 1.35, 0.0), _white_mat, "KioskBody")
 	_box(kiosk, Vector3(2.3, 0.18, 2.4), Vector3(0.0, 2.78, 0.0), _roof_mat, "KioskRoof")
-	_box(kiosk, Vector3(0.05, 1.0, 1.3), Vector3(-0.96, 1.85, 0.0), _glass_mat, "KioskWindow")
-	_box(kiosk, Vector3(0.05, 1.95, 0.85), Vector3(-0.96, 1.0, 0.0), _dark_wood_mat, "KioskDoor")
-	_label(kiosk, "SCALE", Vector3(-1.0, 2.5, 0.0), 0.006, Color(0.10, 0.14, 0.10), 300, 36, Vector3(0.0, -90.0, 0.0))
+	# Окно и дверь — отдельные панели на западной стене, без наложения друг на друга
+	# и без утопания в теле киоска (раньше они пересекались и мерцали).
+	_box(kiosk, Vector3(0.06, 0.80, 1.25), Vector3(-0.98, 1.97, 0.0), _glass_mat, "KioskWindow")
+	_box(kiosk, Vector3(0.06, 1.50, 0.90), Vector3(-0.98, 0.77, 0.0), _dark_wood_mat, "KioskDoor")
+	_label(kiosk, "SCALE", Vector3(-1.02, 2.55, 0.0), 0.0055, Color(0.10, 0.14, 0.10), 300, 30, Vector3(0.0, -90.0, 0.0))
 
 
 func _build_props() -> void:
@@ -306,7 +371,7 @@ func _build_props() -> void:
 	tank.name = "FuelTank"
 	tank.position = Vector3(38.0, 0.0, 112.5)
 	props.add_child(tank)
-	_cylinder(tank, 2.0, 4.4, Vector3(0.0, 1.45, 0.0), _dark_metal_mat, "Tank", Vector3(0.0, 0.0, 90.0))
+	_cylinder(tank, 2.0, 4.4, Vector3(0.0, 2.0, 0.0), _dark_metal_mat, "Tank", Vector3(0.0, 0.0, 90.0))
 	for sx in [-1.4, 1.4]:
 		_box(tank, Vector3(0.45, 1.0, 1.5), Vector3(sx, 0.5, 0.0), _concrete_mat, "TankCradle")
 	_box(tank, Vector3(0.7, 1.35, 0.55), Vector3(-2.6, 0.68, 1.0), _barrel_mat, "FuelPump")
@@ -319,6 +384,12 @@ func _build_props() -> void:
 		var bz: float = 82.4 + float(row) * 1.9
 		var by: float = 0.82 + (1.55 if row == 1 else 0.0)
 		_cylinder(props, 1.6, 1.5, Vector3(bx, by, bz), _hay_mat, "HayBale", Vector3(0.0, 0.0, 90.0))
+		_hay_colliders.append({
+			"pos": Vector3(bx, by, bz),
+			"radius": 0.8,
+			"height": 1.5,
+			"rot": Vector3(0.0, 0.0, 90.0),
+		})
 
 	# Паллеты и ящики возле амбара.
 	_crate(props, Vector3(23.6, 0.7, 108.4), Vector3(1.35, 1.2, 1.2))
@@ -397,6 +468,12 @@ func _build_collisions() -> void:
 	_static_box(body, Vector3(2.1, 2.2, 4.5), Vector3(38.0, 1.5, 112.5))
 	_static_box(body, Vector3(0.75, 1.45, 0.6), Vector3(35.4, 0.73, 114.0))
 
+	# Сено: лежачие цилиндры, поэтому коллизия поворачивается вместе с рулоном.
+	for bale in _hay_colliders:
+		_static_cylinder_rot(
+			body, bale.radius, bale.height, bale.pos, bale.rot
+		)
+
 
 func _static_box(
 	body: StaticBody3D, size: Vector3, pos: Vector3, rot_deg: Vector3 = Vector3.ZERO
@@ -422,6 +499,21 @@ func _static_cylinder(body: StaticBody3D, radius: float, height: float, pos: Vec
 	body.add_child(collision)
 
 
+func _static_cylinder_rot(
+	body: StaticBody3D, radius: float, height: float, pos: Vector3, rot_deg: Vector3
+) -> void:
+	var collision := CollisionShape3D.new()
+	var shape := CylinderShape3D.new()
+	shape.radius = radius
+	shape.height = height
+	collision.shape = shape
+	var basis := Basis.from_euler(Vector3(
+		deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z)
+	))
+	collision.transform = Transform3D(basis, pos)
+	body.add_child(collision)
+
+
 # --- Помощники --------------------------------------------------------------
 
 
@@ -436,8 +528,15 @@ func _box(
 	var basis := Basis.from_euler(Vector3(
 		deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z)
 	))
-	basis = basis.scaled(size)
-	return _mesh_node(parent, _unit_box, pos, material, node_name, rot_deg, basis)
+	if rot_deg == Vector3.ZERO:
+		basis = basis.scaled_local(size)
+		return _mesh_node(parent, _unit_box, pos, material, node_name, rot_deg, basis)
+	# Для повёрнутых деталей размер запекаем в меш, а в трансформе
+	# оставляем только поворот. Иначе неравномерный масштаб и поворот
+	# перемножаются в неверном порядке и крыша «складывается» в плоскость.
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	return _mesh_node(parent, mesh, pos, material, node_name, rot_deg, basis)
 
 
 func _cylinder(
@@ -452,8 +551,16 @@ func _cylinder(
 	var basis := Basis.from_euler(Vector3(
 		deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z)
 	))
-	basis = basis.scaled(Vector3(diameter, height, diameter))
-	return _mesh_node(parent, _unit_cylinder, pos, material, node_name, rot_deg, basis)
+	if rot_deg == Vector3.ZERO:
+		basis = basis.scaled_local(Vector3(diameter, height, diameter))
+		return _mesh_node(parent, _unit_cylinder, pos, material, node_name, rot_deg, basis)
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = diameter * 0.5
+	mesh.bottom_radius = diameter * 0.5
+	mesh.height = height
+	mesh.radial_segments = 18
+	mesh.rings = 1
+	return _mesh_node(parent, mesh, pos, material, node_name, rot_deg, basis)
 
 
 func _cone(
@@ -468,7 +575,7 @@ func _cone(
 	var basis := Basis.from_euler(Vector3(
 		deg_to_rad(rot_deg.x), deg_to_rad(rot_deg.y), deg_to_rad(rot_deg.z)
 	))
-	basis = basis.scaled(Vector3(diameter, height, diameter))
+	basis = basis.scaled_local(Vector3(diameter, height, diameter))
 	return _mesh_node(parent, _unit_cone, pos, material, node_name, rot_deg, basis)
 
 

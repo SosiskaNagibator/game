@@ -48,9 +48,17 @@ void fragment() {
 	vec3 col = mix(gravel_dark, gravel_light, coarse * 0.65 + fine * 0.35);
 	col *= 0.93 + tiny * 0.14;
 
+	// Крупные пятна утоптанной земли и пыли.
+	float worn = noise2(world_pos.xz * 0.17 + vec2(3.1, 7.7));
+	col = mix(col, col * vec3(0.80, 0.75, 0.66), smoothstep(0.42, 0.84, worn) * 0.40);
+
 	// Песчано-гравийные камешки.
 	float pebble = smoothstep(0.78, 0.94, noise2(world_pos.xz * 13.0));
 	col = mix(col, gravel_light * 1.2, pebble * pebble_amount);
+
+	// Отдельные крупные камни и тёмная галька.
+	float stone = smoothstep(0.84, 0.97, noise2(world_pos.xz * 4.3 + vec2(9.0, 1.0)));
+	col = mix(col, mix(gravel_light * 1.3, gravel_dark * 0.85, fine), stone * 0.45);
 
 	// Две накатанные колеи.
 	float tracks = smoothstep(0.10, 0.025, abs(u - (0.5 - track_offset)));
