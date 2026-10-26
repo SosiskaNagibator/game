@@ -54,8 +54,14 @@ void fragment() {
 		blade *= smoothstep(1.0, 0.9, h);
 		mask = max(mask, blade);
 	}
-	// Одиночный колосок-цветок сверху у некоторых кустов.
-	float seed_head = smoothstep(0.10, 0.03, abs(uv.x - 0.82 - sin(h * 3.0) * 0.03)) * smoothstep(0.72, 0.80, h);
+	// Одиночный колосок-цветок сверху у некоторых кустов: овальная
+	// головка, а не жёлтый прямоугольник на всю верхушку квада.
+	float head_x = 0.82 + sin(h * 3.0) * 0.03;
+	float seed_head = (
+		smoothstep(0.058, 0.016, abs(uv.x - head_x))
+		* smoothstep(0.70, 0.79, h)
+		* smoothstep(1.0, 0.94, h)
+	);
 
 	float alpha = max(mask, seed_head * flower);
 	ALPHA = alpha;

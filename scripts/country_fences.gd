@@ -9,6 +9,9 @@ var _wood_material: StandardMaterial3D
 var _dark_wood_material: StandardMaterial3D
 var _wire_material: StandardMaterial3D
 
+var _fence_spans: Array[Dictionary] = []
+var _pole_bases: Array[Vector3] = []
+
 
 func _ready() -> void:
 	if get_node_or_null("FencePosts") != null:
@@ -17,6 +20,7 @@ func _ready() -> void:
 	_create_materials()
 	_build_fences()
 	_build_power_line()
+	_build_collisions()
 
 
 func _create_materials() -> void:
@@ -55,7 +59,7 @@ func _build_fences() -> void:
 				var yaw: float = _rng.randf_range(-0.10, 0.10)
 				var tilt: float = _rng.randf_range(-0.05, 0.05)
 				var basis := Basis.from_euler(Vector3(tilt, yaw, -tilt * 0.6))
-				basis = basis.scaled(Vector3(0.14, height, 0.14))
+				basis = basis.scaled_local(Vector3(0.14, height, 0.14))
 				var origin := Vector3(x, y + height * 0.5, z)
 				post_transforms.append(Transform3D(basis, origin))
 
@@ -66,6 +70,7 @@ func _build_fences() -> void:
 							var a: Vector3 = previous + Vector3(0.0, wire_height, 0.0)
 							var b: Vector3 = posts[posts.size() - 1] + Vector3(0.0, wire_height, 0.0)
 							wire_transforms.append(_segment_transform(a, b, 0.022))
+						_fence_spans.append({"a": previous, "b": posts[posts.size() - 1]})
 			z -= 4.0
 
 	_add_multimesh(_unit_box(), post_transforms, _wood_material, "FencePosts", false)
@@ -93,6 +98,7 @@ func _build_power_line() -> void:
 		var y: float = RuralHeight.terrain_height(x, z)
 		var base := Vector3(x, y, z)
 		poles.append(base)
+		_pole_bases.append(base)
 		pole_transforms.append(Transform3D(Basis.IDENTITY, base + Vector3(0.0, 4.3, 0.0)))
 		arm_transforms.append(Transform3D(Basis.IDENTITY, base + Vector3(0.0, 7.95, 0.0)))
 		z -= 46.0
@@ -116,6 +122,42 @@ func _build_power_line() -> void:
 	_add_multimesh(_unit_box(), wire_transforms, _wire_material, "PowerWires", false)
 
 
+func _build_collisions() -> void:
+	var body := StaticBody3D.new()
+	body.name = "FenceCollision"
+	add_child(body)
+
+	# Сплошная низкая стенка вдоль каждой секции проволоки: игрок
+	# упирается в забор, а не проходит сквозь столбы и проволоку.
+	for span in _fence_spans:
+		var a: Vector3 = span["a"]
+		var b: Vector3 = span["b"]
+		var delta := b - a
+		var length := Vector2(delta.x, delta.z).length()
+		if length < 0.01:
+			continue
+		var yaw := atan2(delta.x, delta.z)
+		var shape := BoxShape3D.new()
+		shape.size = Vector3(0.16, 1.45, length)
+		var collision := CollisionShape3D.new()
+		collision.shape = shape
+		collision.transform = Transform3D(
+			Basis(Vector3.UP, yaw),
+			Vector3((a.x + b.x) * 0.5, minf(a.y, b.y) + 0.725, (a.z + b.z) * 0.5)
+		)
+		body.add_child(collision)
+
+	# Столбы ЛЭП тоже должны быть твёрдыми.
+	for base in _pole_bases:
+		var shape := CylinderShape3D.new()
+		shape.radius = 0.22
+		shape.height = 8.6
+		var collision := CollisionShape3D.new()
+		collision.shape = shape
+		collision.position = base + Vector3(0.0, 4.3, 0.0)
+		body.add_child(collision)
+
+
 func _unit_box() -> BoxMesh:
 	var box := BoxMesh.new()
 	box.size = Vector3.ONE
@@ -128,7 +170,7 @@ func _segment_transform(a: Vector3, b: Vector3, thickness: float) -> Transform3D
 	if length < 0.001:
 		return Transform3D(Basis.IDENTITY, a)
 	var basis := Basis.looking_at(direction.normalized(), Vector3.UP)
-	basis = basis.scaled(Vector3(thickness, thickness, length))
+	basis = basis.scaled_local(Vector3(thickness, thickness, length))
 	return Transform3D(basis, (a + b) * 0.5)
 
 

@@ -119,14 +119,22 @@ void fragment() {
 	// В колее гравий утрамбован, цвет ровнее и темнее.
 	col = mix(col, track_color, tracks * 0.46 * track_strength);
 
-	// Пыльный гребень по центру.
-	float crown = smoothstep(0.34, 0.0, abs(u - 0.5));
-	col = mix(col, gravel_light * 1.07, crown * 0.16);
+	// Крупные пятна утоптанной земли и пыли.
+	float worn = noise2(world_pos.xz * 0.17 + vec2(3.1, 7.7));
+	col = mix(col, col * vec3(0.80, 0.75, 0.66), smoothstep(0.42, 0.84, worn) * 0.40);
 
-	// Плавный переход к обочине с неровной границей.
-	float edge_n = edge + (value_noise(vec2(p.y * 1.7, p.x * 1.7)) - 0.5) * 0.05;
-	float shoulder = smoothstep(0.74, 0.995, edge_n);
-	col = mix(col, edge_color, shoulder * 0.82 * edge_strength);
+	// Песчано-гравийные камешки.
+	float pebble = smoothstep(0.78, 0.94, noise2(world_pos.xz * 13.0));
+	col = mix(col, gravel_light * 1.2, pebble * pebble_amount);
+
+	// Отдельные крупные камни и тёмная галька.
+	float stone = smoothstep(0.84, 0.97, noise2(world_pos.xz * 4.3 + vec2(9.0, 1.0)));
+	col = mix(col, mix(gravel_light * 1.3, gravel_dark * 0.85, fine), stone * 0.45);
+
+	// Две накатанные колеи.
+	float tracks = smoothstep(0.10, 0.025, abs(u - (0.5 - track_offset)));
+	tracks += smoothstep(0.10, 0.025, abs(u - (0.5 + track_offset)));
+	col = mix(col, track_color, clamp(tracks, 0.0, 1.0) * 0.42 * track_strength);
 
 	// Мелкая пыль на обочине.
 	col *= 1.0 - shoulder * 0.06 * grain;

@@ -12,6 +12,8 @@ var _rng := RandomNumberGenerator.new()
 var _trunk_transforms: Array[Transform3D] = []
 var _foliage_transforms: Array[Transform3D] = []
 var _foliage_data: Array[Color] = []
+var _tree_colliders: Array[Dictionary] = []
+var _bush_colliders: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -22,6 +24,7 @@ func _ready() -> void:
 	_scatter_bushes()
 	_build_trees()
 	_build_grass()
+	_build_collisions()
 
 
 # --- Деревья ---------------------------------------------------------------
@@ -78,12 +81,18 @@ func _add_tree(x: float, z: float, size_scale: float) -> void:
 	var crown_radius: float = _rng.randf_range(2.1, 3.1) * size_scale
 	var tint: Color = RuralHeight.foliage_color(_rng)
 
+	_tree_colliders.append({
+		"pos": Vector3(x, y, z),
+		"radius": 0.31 * size_scale,
+		"height": trunk_height,
+	})
+
 	var trunk_basis := Basis.from_euler(Vector3(
 		_rng.randf_range(-0.04, 0.04),
 		_rng.randf_range(0.0, TAU),
 		_rng.randf_range(-0.04, 0.04)
 	))
-	trunk_basis = trunk_basis.scaled(Vector3(size_scale, trunk_height, size_scale))
+	trunk_basis = trunk_basis.scaled_local(Vector3(size_scale, trunk_height, size_scale))
 	_trunk_transforms.append(Transform3D(trunk_basis, Vector3(x, y + trunk_height * 0.5, z)))
 
 	var blob_count: int = _rng.randi_range(3, 5)
@@ -104,7 +113,7 @@ func _add_tree(x: float, z: float, size_scale: float) -> void:
 			_rng.randf_range(0.0, TAU),
 			_rng.randf_range(-0.15, 0.15)
 		))
-		basis = basis.scaled(blob_scale)
+		basis = basis.scaled_local(blob_scale)
 		var center := Vector3(
 			x + offset.x,
 			y + trunk_height * 0.94 + offset.y,
@@ -132,8 +141,13 @@ func _scatter_bushes() -> void:
 			continue
 		var y: float = RuralHeight.terrain_height(x, z)
 		var radius: float = _rng.randf_range(0.55, 1.15)
+		_bush_colliders.append({
+			"pos": Vector3(x, y, z),
+			"radius": radius * 1.2,
+			"height": radius * 1.4,
+		})
 		var basis := Basis.from_euler(Vector3(0.0, _rng.randf_range(0.0, TAU), 0.0))
-		basis = basis.scaled(Vector3(radius * 1.4, radius, radius * 1.4))
+		basis = basis.scaled_local(Vector3(radius * 1.4, radius, radius * 1.4))
 		_foliage_transforms.append(Transform3D(basis, Vector3(x, y + radius * 0.55, z)))
 		var tint: Color = RuralHeight.foliage_color(_rng)
 		_foliage_data.append(Color(tint.r * 0.86, tint.g * 0.9, tint.b * 0.8, 1.0))
@@ -184,13 +198,13 @@ func _build_grass() -> void:
 		var x: float = RuralHeight.road_x(z) + _rng.randf_range(-26.0, 30.0)
 		if absf(x - RuralHeight.road_x(z)) < 5.0:
 			continue
-		if RuralHeight.yard_mask(x, z) > 0.035:
+		if RuralHeight.yard_mask(x, z) > 0.18:
 			continue
 
 		var y: float = RuralHeight.terrain_height(x, z)
 		var scale: float = _rng.randf_range(0.70, 1.20)
 		var basis := Basis.from_euler(Vector3(0.0, _rng.randf_range(0.0, TAU), 0.0))
-		basis = basis.scaled(Vector3(scale, scale * _rng.randf_range(0.8, 1.25), scale))
+		basis = basis.scaled_local(Vector3(scale, scale * _rng.randf_range(0.8, 1.25), scale))
 		transforms.append(Transform3D(basis, Vector3(x, y - 0.02, z)))
 		data.append(Color(_rng.randf(), _rng.randf(), 0.0, 1.0))
 
@@ -249,6 +263,35 @@ func _make_grass_mesh() -> ArrayMesh:
 		st.add_vertex(d)
 
 	return st.commit()
+
+
+# --- Коллизии --------------------------------------------------------------
+
+
+func _build_collisions() -> void:
+	var body := StaticBody3D.new()
+	body.name = "VegetationCollision"
+	add_child(body)
+
+	for tree in _tree_colliders:
+		var center: Vector3 = tree["pos"] + Vector3(0.0, tree["height"] * 0.5, 0.0)
+		_add_cylinder_shape(body, tree["radius"], tree["height"], center)
+
+	for bush in _bush_colliders:
+		var center: Vector3 = bush["pos"] + Vector3(0.0, bush["height"] * 0.5, 0.0)
+		_add_cylinder_shape(body, bush["radius"], bush["height"], center)
+
+
+func _add_cylinder_shape(
+	body: StaticBody3D, radius: float, height: float, center: Vector3
+) -> void:
+	var shape := CylinderShape3D.new()
+	shape.radius = radius
+	shape.height = height
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	collision.position = center
+	body.add_child(collision)
 
 
 # --- Общее -----------------------------------------------------------------
