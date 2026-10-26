@@ -1,3 +1,25 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Godot-specific ignores
+export.cfg
+export_presets.cfg
+*.translation
+
+# Imported translations (automatically generated from CSV files)
+*.translation
+
+# Mono-specific ignores (если вдруг решите добавить C#)
+.mono/
+data_*/
+mono_crash.*.json
+
+# System files (чтобы не тащить файлы ОС друг друга)
+.DS_Store
+Thumbs.db
+
+# IDE / Editor folders (настройки ваших личных редакторов кода)
+.vscode/
+.idea/
+*.swp
