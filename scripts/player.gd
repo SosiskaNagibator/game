@@ -8,6 +8,7 @@ extends CharacterBody3D
 ##   Space        — прыжок
 ##   Ctrl         — присесть (удерживать)
 ##   E            — сесть в машину / выйти из машины
+##   V            — вид от третьего лица (в машине)
 ##   Esc          — пауза (обрабатывается камерой машины)
 
 @export_group("Передвижение")
@@ -215,7 +216,7 @@ func _enter_nearest_vehicle() -> void:
 	velocity = Vector3.ZERO
 	set_physics_process(false)
 
-	_hint.text = "[E] Выйти из машины"
+	_hint.text = "[E] Выйти из машины    [V] Сменить вид"
 	_hint.visible = true
 
 

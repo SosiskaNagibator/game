@@ -8,7 +8,9 @@
 [ext_resource type="Script" uid="uid://dm2n82ijuss4u" path="res://scripts/country_vegetation.gd" id="6_vegetation"]
 [ext_resource type="Script" uid="uid://d2lusy7blc3r5" path="res://scripts/farmstead.gd" id="7_farmstead"]
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="8_player"]
-[ext_resource type="PackedScene" path="res://scenes/BaseVehicle.tscn" id="9_vehicle"]
+[ext_resource type="PackedScene" uid="uid://c5bn1rd0s2pf0" path="res://scenes/BaseVehicle.tscn" id="9_vehicle"]
+[ext_resource type="PackedScene" uid="uid://ywhhycey5gcx" path="res://assets/models/usa_pickup/usa_pickup.glb" id="10_st1pv"]
+[ext_resource type="PackedScene" uid="uid://dvnye2e52t82k" path="res://assets/models/old_pickup/old_pickup.glb" id="10_x16ky"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("1_sky")
@@ -60,7 +62,7 @@ script = ExtResource("2_base")
 environment = SubResource("Environment_main")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=1152824643]
-transform = Transform3D(0.57357645, 0.52654076, -0.62750685, 0, 0.76604444, 0.6427876, 0.81915206, -0.3686878, 0.43938506, 0, 0, 0)
+transform = Transform3D(0.57357645, 0.52654064, -0.6275068, 0, 0.76604426, 0.6427875, 0.81915206, -0.36868772, 0.439385, 0, 0, 0)
 light_color = Color(1, 0.92, 0.78, 1)
 light_energy = 1.5
 shadow_enabled = true
@@ -73,6 +75,7 @@ script = ExtResource("3_terrain")
 
 [node name="Road" type="Node3D" parent="." unique_id=700693744]
 script = ExtResource("4_road")
+segment_length = 2.0
 
 [node name="Fences" type="Node3D" parent="." unique_id=889106478]
 script = ExtResource("5_fences")
@@ -88,4 +91,14 @@ script = ExtResource("7_farmstead")
 transform = Transform3D(0.99280864, 0, -0.119712204, 0, 1, 0, 0.119712204, 0, 0.99280864, 1.2, 0.2, 124.5)
 
 [node name="BaseVehicle" parent="." unique_id=1056092871 instance=ExtResource("9_vehicle")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.3, 0.75, 120.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.3, -0.45, 120.5)
+center_of_mass = Vector3(0, 0.62, 0)
+
+[node name="old_pickup" parent="." unique_id=1522103569 instance=ExtResource("10_x16ky")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.93416977, -0.67825425, 129.81027)
+
+[node name="Sketchfab_Scene" parent="." unique_id=980853750 instance=ExtResource("10_st1pv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0381176, -0.7174952, 130.51666)
+
+[node name="Sketchfab_Scene2" parent="." unique_id=2057146603 instance=ExtResource("10_st1pv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5290432, -0.8268528, 135.40363)
