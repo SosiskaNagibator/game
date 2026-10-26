@@ -1,0 +1,201 @@
+[gd_scene load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://scripts/vehicle_base.gd" id="1_vehicle"]
+[ext_resource type="Script" path="res://scripts/fps_camera.gd" id="2_camera"]
+[ext_resource type="Shader" path="res://shaders/checker_surface.gdshader" id="3_checker"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_body"]
+size = Vector3(2.2, 1.2, 5.4)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_body"]
+shader = ExtResource("3_checker")
+shader_parameter/color_a = Color(0.31, 0.37, 0.44, 1)
+shader_parameter/color_b = Color(0.38, 0.44, 0.51, 1)
+shader_parameter/cell_size = 0.8
+shader_parameter/roughness_value = 0.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_body"]
+material = SubResource("ShaderMaterial_body")
+size = Vector3(2.2, 1.2, 5.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_windshield"]
+transparency = 1
+albedo_color = Color(0.07, 0.11, 0.15, 0.35)
+metallic = 0.5
+roughness = 0.1
+
+[sub_resource type="BoxMesh" id="BoxMesh_windshield"]
+material = SubResource("StandardMaterial3D_windshield")
+size = Vector3(1.9, 0.7, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_headlight"]
+albedo_color = Color(1, 0.93, 0.72, 1)
+emission_enabled = true
+emission = Color(1, 0.88, 0.6, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_taillight"]
+albedo_color = Color(0.6, 0.05, 0.04, 1)
+emission_enabled = true
+emission = Color(0.9, 0.05, 0.03, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_light"]
+material = SubResource("StandardMaterial3D_headlight")
+size = Vector3(0.32, 0.16, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tire"]
+albedo_color = Color(0.045, 0.048, 0.052, 1)
+roughness = 0.95
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_tire"]
+material = SubResource("StandardMaterial3D_tire")
+top_radius = 0.45
+bottom_radius = 0.45
+height = 0.34
+radial_segments = 24
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rim"]
+albedo_color = Color(0.55, 0.57, 0.6, 1)
+metallic = 0.7
+roughness = 0.35
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_rim"]
+material = SubResource("StandardMaterial3D_rim")
+top_radius = 0.2
+bottom_radius = 0.2
+height = 0.36
+radial_segments = 16
+
+[node name="BaseVehicle" type="VehicleBody3D" groups=["vehicles"]]
+mass = 1500.0
+can_sleep = false
+center_of_mass_mode = 1
+center_of_mass = Vector3(0, -0.35, 0)
+script = ExtResource("1_vehicle")
+max_engine_force = 3500.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_body")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_body")
+
+[node name="Windshield" type="MeshInstance3D" parent="."]
+layers = 2
+position = Vector3(0, 0.15, -2.705)
+mesh = SubResource("BoxMesh_windshield")
+
+[node name="HeadlightLeft" type="MeshInstance3D" parent="."]
+layers = 2
+position = Vector3(-0.72, -0.3, -2.71)
+mesh = SubResource("BoxMesh_light")
+
+[node name="HeadlightRight" type="MeshInstance3D" parent="."]
+layers = 2
+position = Vector3(0.72, -0.3, -2.71)
+mesh = SubResource("BoxMesh_light")
+
+[node name="TaillightLeft" type="MeshInstance3D" parent="."]
+layers = 2
+position = Vector3(-0.72, -0.3, 2.71)
+mesh = SubResource("BoxMesh_light")
+material_override = SubResource("StandardMaterial3D_taillight")
+
+[node name="TaillightRight" type="MeshInstance3D" parent="."]
+layers = 2
+position = Vector3(0.72, -0.3, 2.71)
+mesh = SubResource("BoxMesh_light")
+material_override = SubResource("StandardMaterial3D_taillight")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+process_mode = 3
+position = Vector3(0, 0.5, -0.45)
+cull_mask = 1
+fov = 75.0
+near = 0.05
+script = ExtResource("2_camera")
+
+[node name="FrontLeftWheel" type="VehicleWheel3D" parent="."]
+position = Vector3(-1.06, -0.35, -1.75)
+use_as_steering = true
+wheel_radius = 0.45
+wheel_rest_length = 0.25
+suspension_travel = 0.28
+suspension_stiffness = 55.0
+suspension_max_force = 18000.0
+damping_compression = 2.0
+damping_relaxation = 2.5
+wheel_friction_slip = 12.0
+
+[node name="FrontRightWheel" type="VehicleWheel3D" parent="."]
+position = Vector3(1.06, -0.35, -1.75)
+use_as_steering = true
+wheel_radius = 0.45
+wheel_rest_length = 0.25
+suspension_travel = 0.28
+suspension_stiffness = 55.0
+suspension_max_force = 18000.0
+damping_compression = 2.0
+damping_relaxation = 2.5
+wheel_friction_slip = 12.0
+
+[node name="RearLeftWheel" type="VehicleWheel3D" parent="."]
+position = Vector3(-1.06, -0.35, 1.8)
+use_as_traction = true
+wheel_radius = 0.45
+wheel_rest_length = 0.25
+suspension_travel = 0.24
+suspension_stiffness = 70.0
+suspension_max_force = 22000.0
+damping_compression = 2.4
+damping_relaxation = 3.0
+wheel_friction_slip = 14.0
+
+[node name="RearRightWheel" type="VehicleWheel3D" parent="."]
+position = Vector3(1.06, -0.35, 1.8)
+use_as_traction = true
+wheel_radius = 0.45
+wheel_rest_length = 0.25
+suspension_travel = 0.24
+suspension_stiffness = 70.0
+suspension_max_force = 22000.0
+damping_compression = 2.4
+damping_relaxation = 3.0
+wheel_friction_slip = 14.0
+
+[node name="WheelVisual" type="MeshInstance3D" parent="FrontLeftWheel"]
+layers = 2
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CylinderMesh_tire")
+
+[node name="Rim" type="MeshInstance3D" parent="FrontLeftWheel/WheelVisual"]
+layers = 2
+mesh = SubResource("CylinderMesh_rim")
+
+[node name="WheelVisual" type="MeshInstance3D" parent="FrontRightWheel"]
+layers = 2
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CylinderMesh_tire")
+
+[node name="Rim" type="MeshInstance3D" parent="FrontRightWheel/WheelVisual"]
+layers = 2
+mesh = SubResource("CylinderMesh_rim")
+
+[node name="WheelVisual" type="MeshInstance3D" parent="RearLeftWheel"]
+layers = 2
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CylinderMesh_tire")
+
+[node name="Rim" type="MeshInstance3D" parent="RearLeftWheel/WheelVisual"]
+layers = 2
+mesh = SubResource("CylinderMesh_rim")
+
+[node name="WheelVisual" type="MeshInstance3D" parent="RearRightWheel"]
+layers = 2
+transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CylinderMesh_tire")
+
+[node name="Rim" type="MeshInstance3D" parent="RearRightWheel/WheelVisual"]
+layers = 2
+mesh = SubResource("CylinderMesh_rim")
