@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://6pjwecc1v10m"]
+
+[ext_resource type="PackedScene" uid="uid://dvnye2e52t82k" path="res://assets/models/old_pickup/old_pickup.glb" id="1"]
+
+[node name="Test" type="Node3D" unique_id=799884835]
+
+[node name="Body" parent="." unique_id=872863817 instance=ExtResource("1")]

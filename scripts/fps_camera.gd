@@ -1,12 +1,17 @@
 extends Camera3D
 ## Камера от первого лица для машины.
 ##
-## Вращение мышью: Y — вокруг вертикали, X — наклон (ограничен ±80°).
+## Вращение мышью: Y — вокруг вертикали, X — наклон.
+## Камера может вращаться на полный оборот и по горизонтали, и по вертикали.
 ## ESC — освободить мышь и поставить игру на паузу; повторное ESC — продолжить.
 
 ## Чувствительность мыши (радиан на пиксель).
 @export_range(0.0005, 0.01, 0.0001) var mouse_sensitivity: float = 0.0022
-## Предел наклона камеры по вертикали в градусах.
+## Инверсия вертикали для вида от первого лица: мышь вверх — камера смотрит вниз.
+@export var invert_y: bool = false
+## Полное вращение по вертикали (без ограничения угла).
+@export var full_rotation: bool = true
+## Предел наклона камеры по вертикали в градусах (если full_rotation выключено).
 @export_range(30.0, 89.0, 1.0) var max_pitch_deg: float = 80.0
 ## Имя действия для паузы (настраивается в Project Settings -> Input Map).
 @export var pause_action: StringName = &"pause"
@@ -39,16 +44,23 @@ func _input(event: InputEvent) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		# Горизонталь: поворот камеры вокруг локальной оси Y (влево/вправо).
-		rotation.y -= event.relative.x * mouse_sensitivity
-
-		# Вертикаль: наклон с жёстким ограничением, чтобы камера не переворачивалась.
-		var pitch_limit: float = deg_to_rad(max_pitch_deg)
-		_pitch = clampf(
-			_pitch - event.relative.y * mouse_sensitivity,
-			-pitch_limit,
-			pitch_limit
+		# Горизонталь: полный оборот вокруг локальной оси Y (влево/вправо).
+		rotation.y = wrapf(
+			rotation.y - event.relative.x * mouse_sensitivity,
+			-PI,
+			PI
 		)
+
+		# Вертикаль: знак учитывает инверсию; full_rotation разрешает полный оборот.
+		var direction: float = 1.0 if invert_y else -1.0
+		_pitch += event.relative.y * mouse_sensitivity * direction
+
+		if full_rotation:
+			_pitch = wrapf(_pitch, -PI, PI)
+		else:
+			var pitch_limit: float = deg_to_rad(max_pitch_deg)
+			_pitch = clampf(_pitch, -pitch_limit, pitch_limit)
+
 		rotation.x = _pitch
 		rotation.z = 0.0
 

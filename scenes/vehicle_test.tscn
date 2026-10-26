@@ -1,32 +1,9 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene format=3 uid="uid://dh24f2kujphou"]
 
-[ext_resource type="PackedScene" path="res://scenes/BaseVehicle.tscn" id="1_vehicle"]
+[ext_resource type="PackedScene" uid="uid://c5bn1rd0s2pf0" path="res://scenes/BaseVehicle.tscn" id="1_vehicle"]
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_player"]
-[ext_resource type="Shader" path="res://shaders/grid_ground.gdshader" id="3_grid"]
-[ext_resource type="Shader" path="res://shaders/checker_surface.gdshader" id="4_checker"]
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
-size = Vector2(400, 400)
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ground"]
-shader = ExtResource("3_grid")
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
-size = Vector3(400, 1, 400)
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_crate"]
-shader = ExtResource("4_checker")
-shader_parameter/color_a = Color(0.5, 0.37, 0.21, 1)
-shader_parameter/color_b = Color(0.64, 0.49, 0.29, 1)
-shader_parameter/cell_size = 0.5
-shader_parameter/roughness_value = 0.85
-
-[sub_resource type="BoxMesh" id="BoxMesh_crate"]
-material = SubResource("ShaderMaterial_crate")
-size = Vector3(1, 1, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_crate"]
-size = Vector3(1, 1, 1)
+[ext_resource type="Shader" uid="uid://cf5mipshi2pnr" path="res://shaders/grid_ground.gdshader" id="3_grid"]
+[ext_resource type="Shader" uid="uid://x4t87tr0qc6" path="res://shaders/checker_surface.gdshader" id="4_checker"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
 sky_top_color = Color(0.22, 0.42, 0.7, 1)
@@ -49,66 +26,99 @@ fog_enabled = true
 fog_light_color = Color(0.68, 0.76, 0.85, 1)
 fog_density = 0.0025
 
-[node name="VehicleTest" type="Node3D"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(400, 1, 400)
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+size = Vector2(400, 400)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ground"]
+render_priority = 0
+shader = ExtResource("3_grid")
+shader_parameter/base_color = Color(0.38, 0.4, 0.34, 1)
+shader_parameter/cell_color = Color(0.44, 0.46, 0.39, 1)
+shader_parameter/line_color = Color(0.68, 0.71, 0.62, 1)
+shader_parameter/major_line_color = Color(0.92, 0.94, 0.84, 1)
+shader_parameter/cell_size = 1.0
+shader_parameter/major_every = 10.0
+shader_parameter/line_strength = 0.55
+shader_parameter/major_strength = 0.9
+shader_parameter/fade_start = 60.0
+shader_parameter/fade_end = 160.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_crate"]
+render_priority = 0
+shader = ExtResource("4_checker")
+shader_parameter/color_a = Color(0.5, 0.37, 0.21, 1)
+shader_parameter/color_b = Color(0.64, 0.49, 0.29, 1)
+shader_parameter/cell_size = 0.5
+shader_parameter/roughness_value = 0.85
+
+[sub_resource type="BoxMesh" id="BoxMesh_crate"]
+material = SubResource("ShaderMaterial_crate")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_crate"]
+
+[node name="VehicleTest" type="Node3D" unique_id=1766888288]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1296991987]
 environment = SubResource("Environment_main")
 
-[node name="Ground" type="StaticBody3D" parent="."]
+[node name="Ground" type="StaticBody3D" parent="." unique_id=1152529733]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
-position = Vector3(0, -0.5, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=1326761214]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("BoxShape3D_ground")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1103071173]
 mesh = SubResource("PlaneMesh_ground")
 surface_material_override/0 = SubResource("ShaderMaterial_ground")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1967670216]
 transform = Transform3D(1, 0, 0, 0, 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 15, 0)
 light_energy = 1.2
 shadow_enabled = true
 directional_shadow_max_distance = 120.0
 
-[node name="CrateA" type="StaticBody3D" parent="."]
-position = Vector3(7, 0.5, 3)
+[node name="CrateA" type="StaticBody3D" parent="." unique_id=2059041130]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0.5, 3)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="CrateA"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CrateA" unique_id=1075086094]
 mesh = SubResource("BoxMesh_crate")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="CrateA"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CrateA" unique_id=981399513]
 shape = SubResource("BoxShape3D_crate")
 
-[node name="CrateB" type="StaticBody3D" parent="."]
-position = Vector3(8.1, 0.5, 3)
+[node name="CrateB" type="StaticBody3D" parent="." unique_id=2088443575]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.1, 0.5, 3)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="CrateB"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CrateB" unique_id=1878269418]
 mesh = SubResource("BoxMesh_crate")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="CrateB"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CrateB" unique_id=932507465]
 shape = SubResource("BoxShape3D_crate")
 
-[node name="CrateC" type="StaticBody3D" parent="."]
-position = Vector3(7, 1.5, 3)
+[node name="CrateC" type="StaticBody3D" parent="." unique_id=455898447]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 1.5, 3)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="CrateC"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CrateC" unique_id=613156727]
 mesh = SubResource("BoxMesh_crate")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="CrateC"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CrateC" unique_id=893836196]
 shape = SubResource("BoxShape3D_crate")
 
-[node name="CrateD" type="StaticBody3D" parent="."]
-position = Vector3(-7, 0.5, -4)
+[node name="CrateD" type="StaticBody3D" parent="." unique_id=1846948755]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0.5, -4)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="CrateD"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CrateD" unique_id=1587867788]
 mesh = SubResource("BoxMesh_crate")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="CrateD"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CrateD" unique_id=1251422882]
 shape = SubResource("BoxShape3D_crate")
 
-[node name="BaseVehicle" parent="." instance=ExtResource("1_vehicle")]
-position = Vector3(0, 1.15, 0)
+[node name="BaseVehicle" parent="." unique_id=727373787 instance=ExtResource("1_vehicle")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+center_of_mass = Vector3(0, 0.62, 0)
 
-[node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector3(4, 0.1, 0)
-rotation = Vector3(0, 1.5708, 0)
+[node name="Player" parent="." unique_id=1508467242 instance=ExtResource("2_player")]
+transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, 4, 0.1, 0)
