@@ -46,7 +46,7 @@ script = ExtResource("2_base")
 environment = SubResource("Environment_main")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=1152824643]
-transform = Transform3D(0.57357645, 0.5265407, -0.6275068, 0, 0.7660443, 0.6427875, 0.81915206, -0.36868778, 0.439385, -319.50125, 177.43387, 265.0973)
+transform = Transform3D(0.57357645, 0.52654064, -0.6275068, 0, 0.76604426, 0.6427875, 0.81915206, -0.36868772, 0.439385, -319.50125, 177.43387, 265.0973)
 visible = false
 light_color = Color(1, 0.94, 0.82, 1)
 light_energy = 1.18
@@ -83,5 +83,5 @@ center_of_mass = Vector3(0, 0.62, 0)
 script = ExtResource("10_st1pv")
 world_env = NodePath("../WorldEnvironment")
 player_or_camera = NodePath("../Player")
-time_scale = 10.0
+time_scale = 30.0
 start_time = 8.0

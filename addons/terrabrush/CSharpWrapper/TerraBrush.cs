@@ -62,6 +62,24 @@ public partial class TerraBrush : Node {
         }
     }
 
+    public bool ChunkMesh {
+        get {
+            return _godotHandle.AsGodotObject().Call("get_chunkMesh").AsBool();
+        }
+        set {
+            _godotHandle.AsGodotObject().Call("set_chunkMesh", value);
+        }
+    }
+
+    public int ChunkAABBHeight {
+        get {
+            return _godotHandle.AsGodotObject().Call("get_chunkAABBHeight").AsInt32();
+        }
+        set {
+            _godotHandle.AsGodotObject().Call("set_chunkAABBHeight", value);
+        }
+    }
+
     public int LODLevels {
         get {
             return _godotHandle.AsGodotObject().Call("get_lodLevels").AsInt32();
@@ -86,6 +104,15 @@ public partial class TerraBrush : Node {
         }
         set {
             _godotHandle.AsGodotObject().Call("set_lodInitialCellWidth", value);
+        }
+    }
+
+    public Node3D LODCustomTarget {
+        get {
+            return _godotHandle.AsGodotObject().Call("get_lodCustomTarget").As<Node3D>();
+        }
+        set {
+            _godotHandle.AsGodotObject().Call("set_lodCustomTarget", value);
         }
     }
 

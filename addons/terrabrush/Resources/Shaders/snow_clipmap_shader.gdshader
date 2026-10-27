@@ -9,6 +9,7 @@ void vertex() {
 	_worldVertex = vec3(0);
 	calculateSnowVertex(
 		MODEL_MATRIX, 
+		CUSTOM0,
 		COLOR, 
 		VERTEX, 
 		NORMAL,
@@ -23,6 +24,7 @@ void fragment() {
 		ALBEDO,
 		NORMAL_MAP,
 		METALLIC,
+		SPECULAR,
 		ROUGHNESS
 	);
 }
