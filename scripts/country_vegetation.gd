@@ -7,24 +7,35 @@ const FOLIAGE_SHADER := preload("res://shaders/foliage_flat.gdshader")
 const GRASS_SHADER := preload("res://shaders/grass_blade.gdshader")
 
 const RNG_SEED := 77123
+## Раскладка деревьев, которую игрок меняет вручную, хранится здесь.
+const LAYOUT_PATH := "user://tree_layout.cfg"
 
 var _rng := RandomNumberGenerator.new()
 var _trunk_transforms: Array[Transform3D] = []
 var _foliage_transforms: Array[Transform3D] = []
 var _foliage_data: Array[Color] = []
-var _tree_colliders: Array[Dictionary] = []
+## Данные деревьев: позиция, поворот, индексы в MultiMesh и коллайдер.
+## Индексы устойчивы между запусками (сид генерации фиксирован),
+## поэтому раскладку можно сохранять и загружать по номеру дерева.
+var _trees: Array[Dictionary] = []
 var _bush_colliders: Array[Dictionary] = []
+
+var _trunk_instance: MultiMeshInstance3D
+var _crown_instance: MultiMeshInstance3D
 
 
 func _ready() -> void:
 	if get_node_or_null("TreeTrunks") != null:
 		return
+	add_to_group("vegetation")
 	_rng.seed = RNG_SEED
 	_scatter_trees()
 	_scatter_bushes()
 	_build_trees()
 	_build_grass()
 	_build_collisions()
+	if not Engine.is_editor_hint():
+		_load_layout()
 
 
 # --- Деревья ---------------------------------------------------------------
@@ -81,20 +92,20 @@ func _add_tree(x: float, z: float, size_scale: float) -> void:
 	var crown_radius: float = _rng.randf_range(2.1, 3.1) * size_scale
 	var tint: Color = RuralHeight.foliage_color(_rng)
 
-	_tree_colliders.append({
-		"pos": Vector3(x, y, z),
-		"radius": 0.31 * size_scale,
-		"height": trunk_height,
-	})
-
 	var trunk_basis := Basis.from_euler(Vector3(
 		_rng.randf_range(-0.04, 0.04),
 		_rng.randf_range(0.0, TAU),
 		_rng.randf_range(-0.04, 0.04)
 	))
 	trunk_basis = trunk_basis.scaled_local(Vector3(size_scale, trunk_height, size_scale))
-	_trunk_transforms.append(Transform3D(trunk_basis, Vector3(x, y + trunk_height * 0.5, z)))
+	var trunk_local := Transform3D(trunk_basis, Vector3(0.0, trunk_height * 0.5, 0.0))
+	var trunk_index: int = _trunk_transforms.size()
+	_trunk_transforms.append(
+		Transform3D(trunk_basis, Vector3(x, y + trunk_height * 0.5, z))
+	)
 
+	var blob_indices: Array[int] = []
+	var blob_locals: Array[Transform3D] = []
 	var blob_count: int = _rng.randi_range(3, 5)
 	for i in blob_count:
 		var offset := Vector3(
@@ -114,12 +125,13 @@ func _add_tree(x: float, z: float, size_scale: float) -> void:
 			_rng.randf_range(-0.15, 0.15)
 		))
 		basis = basis.scaled_local(blob_scale)
-		var center := Vector3(
-			x + offset.x,
-			y + trunk_height * 0.94 + offset.y,
-			z + offset.z
+		var local := Transform3D(
+			basis,
+			Vector3(offset.x, trunk_height * 0.94 + offset.y, offset.z)
 		)
-		_foliage_transforms.append(Transform3D(basis, center))
+		blob_indices.append(_foliage_transforms.size())
+		blob_locals.append(local)
+		_foliage_transforms.append(Transform3D(basis, Vector3(x, y, z) + local.origin))
 
 		var blob_tint := Color(
 			clampf(tint.r + _rng.randf_range(-0.06, 0.08), 0.0, 1.0),
@@ -128,6 +140,19 @@ func _add_tree(x: float, z: float, size_scale: float) -> void:
 			1.0
 		)
 		_foliage_data.append(blob_tint)
+
+	_trees.append({
+		"pos": Vector3(x, y, z),
+		"initial_pos": Vector3(x, y, z),
+		"yaw": 0.0,
+		"radius": 0.31 * size_scale,
+		"height": trunk_height,
+		"trunk_index": trunk_index,
+		"trunk_local": trunk_local,
+		"blob_indices": blob_indices,
+		"blob_locals": blob_locals,
+		"body": null,
+	})
 
 
 func _scatter_bushes() -> void:
@@ -174,8 +199,20 @@ func _build_trees() -> void:
 	var foliage_material := ShaderMaterial.new()
 	foliage_material.shader = FOLIAGE_SHADER
 
-	_add_multimesh(trunk_mesh, _trunk_transforms, trunk_material, "TreeTrunks", true, false)
-	_add_multimesh(foliage_mesh, _foliage_transforms, foliage_material, "TreeCrowns", true, true)
+	_trunk_instance = _add_multimesh(
+		trunk_mesh, _trunk_transforms, trunk_material, "TreeTrunks", true, false
+	)
+	_crown_instance = _add_multimesh(
+		foliage_mesh, _foliage_transforms, foliage_material, "TreeCrowns", true, true
+	)
+
+	# Деревья можно перетаскивать по всей карте, поэтому AABB для отсечения
+	# должен покрывать весь мир — иначе переставленное дерево может исчезнуть.
+	var tree_bounds := AABB(Vector3(-450.0, -60.0, -450.0), Vector3(900.0, 260.0, 900.0))
+	if _trunk_instance != null:
+		_trunk_instance.custom_aabb = tree_bounds
+	if _crown_instance != null:
+		_crown_instance.custom_aabb = tree_bounds
 
 
 # --- Трава -----------------------------------------------------------------
@@ -269,17 +306,34 @@ func _make_grass_mesh() -> ArrayMesh:
 
 
 func _build_collisions() -> void:
-	var body := StaticBody3D.new()
-	body.name = "VegetationCollision"
-	add_child(body)
+	# У каждого дерева свой StaticBody3D: так дерево можно перетащить,
+	# просто переместив тело, и легко найти его по объекту-коллайдеру.
+	for i in _trees.size():
+		var tree: Dictionary = _trees[i]
+		var body := StaticBody3D.new()
+		body.name = "TreeCollision_%d" % i
+		body.position = tree["pos"]
+		body.set_meta("tree_id", i)
 
-	for tree in _tree_colliders:
-		var center: Vector3 = tree["pos"] + Vector3(0.0, tree["height"] * 0.5, 0.0)
-		_add_cylinder_shape(body, tree["radius"], tree["height"], center)
+		var shape := CylinderShape3D.new()
+		shape.radius = tree["radius"]
+		shape.height = tree["height"]
+
+		var collision := CollisionShape3D.new()
+		collision.name = "Stem"
+		collision.shape = shape
+		collision.position = Vector3(0.0, tree["height"] * 0.5, 0.0)
+		body.add_child(collision)
+		add_child(body)
+		tree["body"] = body
+
+	var bush_body := StaticBody3D.new()
+	bush_body.name = "BushCollision"
+	add_child(bush_body)
 
 	for bush in _bush_colliders:
 		var center: Vector3 = bush["pos"] + Vector3(0.0, bush["height"] * 0.5, 0.0)
-		_add_cylinder_shape(body, bush["radius"], bush["height"], center)
+		_add_cylinder_shape(bush_body, bush["radius"], bush["height"], center)
 
 
 func _add_cylinder_shape(
@@ -304,9 +358,9 @@ func _add_multimesh(
 	node_name: String,
 	cast_shadow: bool,
 	custom_data: bool
-) -> void:
+) -> MultiMeshInstance3D:
 	if transforms.is_empty():
-		return
+		return null
 	var multimesh := MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh.mesh = mesh
@@ -327,3 +381,111 @@ func _add_multimesh(
 		else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	)
 	add_child(instance)
+	return instance
+
+
+# --- Перестановка деревьев игроком -----------------------------------------
+
+
+## Номер дерева по объекту-коллайдеру (луч попал в ствол). -1 — не дерево.
+func tree_id_for_collider(collider: Object) -> int:
+	if collider == null:
+		return -1
+	for i in _trees.size():
+		if _trees[i]["body"] == collider:
+			return i
+	return -1
+
+
+## Позиция дерева (основание ствола, на земле).
+func get_tree_position(tree_id: int) -> Vector3:
+	if tree_id < 0 or tree_id >= _trees.size():
+		return Vector3.ZERO
+	var pos: Vector3 = _trees[tree_id]["pos"]
+	return pos
+
+
+## Переставить дерево. pos — точка на земле, yaw — поворот вокруг Y.
+## snap_to_ground = true подтягивает высоту к рельефу.
+func move_tree(tree_id: int, pos: Vector3, yaw: float, snap_to_ground: bool = true) -> void:
+	if tree_id < 0 or tree_id >= _trees.size():
+		return
+	if _trunk_instance == null or _crown_instance == null:
+		return
+
+	var tree: Dictionary = _trees[tree_id]
+	var target := pos
+	if snap_to_ground:
+		target.y = RuralHeight.terrain_height(target.x, target.z)
+
+	var yaw_basis := Basis(Vector3.UP, yaw)
+	var trunk_local: Transform3D = tree["trunk_local"]
+	var trunk_xform := Transform3D(
+		yaw_basis * trunk_local.basis,
+		target + yaw_basis * trunk_local.origin
+	)
+	_trunk_instance.multimesh.set_instance_transform(tree["trunk_index"], trunk_xform)
+
+	var blob_indices: Array = tree["blob_indices"]
+	var blob_locals: Array = tree["blob_locals"]
+	for i in blob_indices.size():
+		var local: Transform3D = blob_locals[i]
+		var blob_xform := Transform3D(
+			yaw_basis * local.basis,
+			target + yaw_basis * local.origin
+		)
+		_crown_instance.multimesh.set_instance_transform(blob_indices[i], blob_xform)
+
+	var body: StaticBody3D = tree["body"]
+	if body != null:
+		body.global_position = target
+
+	tree["pos"] = target
+	tree["yaw"] = yaw
+
+
+## Временно отключить коллизию дерева, пока его несут.
+func set_tree_ghost(tree_id: int, ghost: bool) -> void:
+	if tree_id < 0 or tree_id >= _trees.size():
+		return
+	var body: StaticBody3D = _trees[tree_id]["body"]
+	if body != null:
+		body.collision_layer = 0 if ghost else 1
+
+
+## Вернуть дерево на исходную позицию.
+func reset_tree(tree_id: int) -> void:
+	if tree_id < 0 or tree_id >= _trees.size():
+		return
+	var tree: Dictionary = _trees[tree_id]
+	move_tree(tree_id, tree["initial_pos"], 0.0, false)
+
+
+## Вернуть все деревья на исходные места и стереть сохранённую раскладку.
+func reset_layout() -> void:
+	for i in _trees.size():
+		reset_tree(i)
+	if FileAccess.file_exists(LAYOUT_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(LAYOUT_PATH))
+
+
+## Сохранить текущую раскладку деревьев.
+func save_layout() -> void:
+	var config := ConfigFile.new()
+	for i in _trees.size():
+		var tree: Dictionary = _trees[i]
+		config.set_value("trees", "pos_%d" % i, tree["pos"])
+		config.set_value("trees", "yaw_%d" % i, tree["yaw"])
+	config.save(LAYOUT_PATH)
+
+
+func _load_layout() -> void:
+	var config := ConfigFile.new()
+	if config.load(LAYOUT_PATH) != OK:
+		return
+	for i in _trees.size():
+		var pos: Variant = config.get_value("trees", "pos_%d" % i, null)
+		if pos is Vector3:
+			var tree_pos: Vector3 = pos
+			var yaw: float = float(config.get_value("trees", "yaw_%d" % i, 0.0))
+			move_tree(i, tree_pos, yaw, false)

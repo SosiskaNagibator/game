@@ -7,8 +7,10 @@
 [ext_resource type="Script" uid="uid://dm2n82ijuss4u" path="res://scripts/country_vegetation.gd" id="6_vegetation"]
 [ext_resource type="Script" uid="uid://d2lusy7blc3r5" path="res://scripts/farmstead.gd" id="7_farmstead"]
 [ext_resource type="PackedScene" uid="uid://bog823l7xxwl0" path="res://scenes/Player.tscn" id="8_player"]
-[ext_resource type="PackedScene" path="res://scenes/BaseVehicle.tscn" id="9_vehicle"]
+[ext_resource type="PackedScene" uid="uid://c5bn1rd0s2pf0" path="res://scenes/BaseVehicle.tscn" id="9_vehicle"]
 [ext_resource type="Script" uid="uid://bhgfn8er3p7hu" path="res://scripts/day_night_cycle.gd" id="10_st1pv"]
+[ext_resource type="Script" uid="uid://3jwr4y5tabtq" path="res://scripts/cargo_system.gd" id="11_cargo"]
+[ext_resource type="Script" uid="uid://oenv7eydrp8a" path="res://scripts/tree_mover.gd" id="12_treemover"]
 
 [sub_resource type="Sky" id="Sky_st1pv"]
 
@@ -85,3 +87,9 @@ world_env = NodePath("../WorldEnvironment")
 player_or_camera = NodePath("../Player")
 time_scale = 30.0
 start_time = 8.0
+
+[node name="CargoSystem" type="Node3D" parent="." unique_id=2094774591]
+script = ExtResource("11_cargo")
+
+[node name="TreeMover" type="Node3D" parent="." unique_id=2094774592]
+script = ExtResource("12_treemover")
