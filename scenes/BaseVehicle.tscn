@@ -362,7 +362,7 @@ center_of_mass_mode = 1
 center_of_mass = Vector3(0, 0.42, 0)
 can_sleep = false
 script = ExtResource("1_vehicle")
-max_engine_force = 3500.0
+max_engine_force = 6200.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2008285255]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0.1)
@@ -374,6 +374,7 @@ shape = SubResource("BoxShape3D_body")
 process_mode = 3
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 1.4849807, 0)
 cull_mask = 3
+far = 20000.0
 script = ExtResource("2_camera")
 
 [node name="ThirdPersonCamera" type="Camera3D" parent="."]
@@ -382,6 +383,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 6.5)
 current = false
 fov = 70.0
 cull_mask = 3
+far = 20000.0
 script = ExtResource("4_third_camera")
 
 [node name="FrontLeftWheel" type="VehicleWheel3D" parent="." unique_id=15621035]

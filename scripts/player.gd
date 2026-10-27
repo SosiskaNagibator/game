@@ -49,6 +49,8 @@ var _pitch: float = 0.0
 var _driving: bool = false
 # Машина, которой управляет игрок.
 var _vehicle: BaseVehicle = null
+# Подсказка от других систем (перестановка деревьев и т.п.).
+var _hint_override: String = ""
 
 
 func _ready() -> void:
@@ -73,9 +75,18 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(_delta: float) -> void:
-	# Подсказка внизу экрана, когда игрок рядом с машиной.
-	if not _driving:
-		_hint.visible = _find_nearest_vehicle() != null
+	# За рулём подсказку показывает сама машина.
+	if _driving:
+		return
+
+	# Подсказка от другой системы важнее подсказки про машину.
+	if not _hint_override.is_empty():
+		_hint.text = _hint_override
+		_hint.visible = true
+		return
+
+	_hint.text = "[E] Сесть в машину"
+	_hint.visible = _find_nearest_vehicle() != null
 
 
 func _input(event: InputEvent) -> void:
@@ -243,3 +254,26 @@ func _leave_vehicle() -> void:
 	_camera.current = true
 
 	_hint.text = "[E] Сесть в машину"
+
+
+# --- Публичный API для других систем ----------------------------------------
+
+
+## Камера от первого лица (нужна для наведения на объекты).
+func get_camera() -> Camera3D:
+	return _camera
+
+
+## Игрок сейчас за рулём?
+func is_driving() -> bool:
+	return _driving
+
+
+## Показать подсказку поверх стандартных (деревья, склад и т.п.).
+func set_hint_override(text: String) -> void:
+	_hint_override = text
+
+
+## Убрать внешнюю подсказку.
+func clear_hint_override() -> void:
+	_hint_override = ""
