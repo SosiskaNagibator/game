@@ -79,6 +79,9 @@ void fragment() {
 	float u = road_uv.x;
 	float edge = abs(u * 2.0 - 1.0);
 	vec2 p = world_pos.xz;
+	
+	// Маска обочины (краев дороги)
+	float shoulder = smoothstep(0.6, 1.0, edge);
 
 	// Размер пикселя в мировых единицах — плавно гасим слишком мелкие детали.
 	float footprint = length(fwidth(p));
@@ -101,8 +104,8 @@ void fragment() {
 
 	// Гравий: светлые камешки и тёмные промежутки между ними.
 	float cell = worley(p * 12.0);
-	float stone = smoothstep(0.32, 0.05, cell);
 	float stone_mask = smoothstep(0.36, 0.70, fbm(p * 3.2 + vec2(-9.0, 5.0)));
+	float stone = smoothstep(0.32, 0.05, cell);
 	col = mix(col, gravel_light * 1.16, stone * stone_mask * pebble_amount * fine_fade * 0.85);
 	float gaps = smoothstep(0.10, 0.38, cell) * smoothstep(0.55, 0.9, value_noise(p * 14.0));
 	col = mix(col, gravel_dark * 0.84, gaps * 0.18 * fine_fade);
@@ -116,30 +119,27 @@ void fragment() {
 	float tracks = smoothstep(track_w + 0.045, track_w * 0.45, du_l);
 	tracks += smoothstep(track_w + 0.045, track_w * 0.45, du_r);
 	tracks = clamp(tracks, 0.0, 1.0);
+	
 	// В колее гравий утрамбован, цвет ровнее и темнее.
 	col = mix(col, track_color, tracks * 0.46 * track_strength);
 
-	// Крупные пятна утоптанной земли и пыли.
-	float worn = noise2(world_pos.xz * 0.17 + vec2(3.1, 7.7));
+	// Крупные пятна утоптанной земли и пыли (ЗАМЕНА noise2 на fbm/value_noise)
+	float worn = fbm(world_pos.xz * 0.17 + vec2(3.1, 7.7));
 	col = mix(col, col * vec3(0.80, 0.75, 0.66), smoothstep(0.42, 0.84, worn) * 0.40);
 
 	// Песчано-гравийные камешки.
-	float pebble = smoothstep(0.78, 0.94, noise2(world_pos.xz * 13.0));
+	float pebble = smoothstep(0.78, 0.94, value_noise(world_pos.xz * 13.0));
 	col = mix(col, gravel_light * 1.2, pebble * pebble_amount);
 
 	// Отдельные крупные камни и тёмная галька.
-	float stone = smoothstep(0.84, 0.97, noise2(world_pos.xz * 4.3 + vec2(9.0, 1.0)));
-	col = mix(col, mix(gravel_light * 1.3, gravel_dark * 0.85, fine), stone * 0.45);
-
-	// Две накатанные колеи.
-	float tracks = smoothstep(0.10, 0.025, abs(u - (0.5 - track_offset)));
-	tracks += smoothstep(0.10, 0.025, abs(u - (0.5 + track_offset)));
-	col = mix(col, track_color, clamp(tracks, 0.0, 1.0) * 0.42 * track_strength);
+	float large_stone = smoothstep(0.84, 0.97, value_noise(world_pos.xz * 4.3 + vec2(9.0, 1.0)));
+	col = mix(col, mix(gravel_light * 1.3, gravel_dark * 0.85, fine), large_stone * 0.45);
 
 	// Мелкая пыль на обочине.
 	col *= 1.0 - shoulder * 0.06 * grain;
 
 	ALBEDO = col;
+	
 	// Накатанные колеи чуть глянцевее утрамбованы, камешки — шершавее.
 	float rough = mix(0.95, 0.86, tracks * track_strength);
 	rough = mix(rough, 0.78, stone * stone_mask * pebble_amount * fine_fade * 0.7);
