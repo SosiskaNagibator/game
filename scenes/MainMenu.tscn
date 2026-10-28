@@ -1,0 +1,654 @@
+[gd_scene format=3 uid="uid://bbav3dpap1buu"]
+
+[ext_resource type="Script" uid="uid://b0xyajpv72cky" path="res://scripts/main_menu.gd" id="1_main_menu"]
+[ext_resource type="PackedScene" uid="uid://dvnye2e52t82k" path="res://assets/models/old_pickup/old_pickup.glb" id="2_pickup"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_night"]
+sky_top_color = Color(0.005, 0.008, 0.018, 1)
+sky_horizon_color = Color(0.07, 0.095, 0.13, 1)
+ground_bottom_color = Color(0.008, 0.01, 0.012, 1)
+ground_horizon_color = Color(0.035, 0.045, 0.055, 1)
+sun_angle_max = 12.0
+
+[sub_resource type="Sky" id="Sky_night"]
+sky_material = SubResource("ProceduralSkyMaterial_night")
+
+[sub_resource type="Environment" id="Environment_night"]
+background_mode = 2
+sky = SubResource("Sky_night")
+ambient_light_source = 3
+ambient_light_color = Color(0.3, 0.36, 0.46, 1)
+ambient_light_sky_contribution = 0.72
+ambient_light_energy = 0.42
+reflected_light_source = 2
+tonemap_mode = 2
+tonemap_exposure = 1.05
+ssao_enabled = true
+ssao_radius = 2.0
+fog_enabled = true
+fog_light_color = Color(0.06, 0.075, 0.1, 1)
+fog_light_energy = 0.55
+fog_density = 0.0025
+fog_sky_affect = 0.28
+adjustment_enabled = true
+adjustment_brightness = 0.92
+adjustment_contrast = 1.12
+adjustment_saturation = 0.78
+
+[sub_resource type="StandardMaterial3D" id="Mat_ground"]
+albedo_color = Color(0.07, 0.08, 0.08, 1)
+metallic = 0.18
+roughness = 0.86
+
+[sub_resource type="BoxMesh" id="Box_ground"]
+material = SubResource("Mat_ground")
+size = Vector3(100, 0.2, 100)
+
+[sub_resource type="StandardMaterial3D" id="Mat_wall"]
+albedo_color = Color(0.18, 0.21, 0.17, 1)
+roughness = 0.74
+
+[sub_resource type="BoxMesh" id="Box_wall"]
+material = SubResource("Mat_wall")
+size = Vector3(16, 8, 0.45)
+
+[sub_resource type="BoxMesh" id="Box_side_wall"]
+material = SubResource("Mat_wall")
+size = Vector3(0.45, 8, 5.6)
+
+[sub_resource type="StandardMaterial3D" id="Mat_concrete"]
+albedo_color = Color(0.21, 0.22, 0.2, 1)
+roughness = 0.82
+
+[sub_resource type="BoxMesh" id="Box_roof"]
+material = SubResource("Mat_concrete")
+size = Vector3(17, 0.42, 6.1)
+
+[sub_resource type="BoxMesh" id="Box_column"]
+material = SubResource("Mat_concrete")
+size = Vector3(0.64, 7.6, 0.68)
+
+[sub_resource type="BoxMesh" id="Box_dock"]
+material = SubResource("Mat_concrete")
+size = Vector3(16, 0.32, 5.8)
+
+[sub_resource type="StandardMaterial3D" id="Mat_trim"]
+albedo_color = Color(0.68, 0.48, 0.12, 1)
+metallic = 0.35
+roughness = 0.48
+
+[sub_resource type="BoxMesh" id="Box_trim"]
+material = SubResource("Mat_trim")
+size = Vector3(16.3, 0.22, 0.28)
+
+[sub_resource type="StandardMaterial3D" id="Mat_warm_emission"]
+albedo_color = Color(0.95, 0.47, 0.12, 1)
+roughness = 0.25
+emission_enabled = true
+emission = Color(1, 0.31, 0.045, 1)
+emission_energy_multiplier = 6.0
+
+[sub_resource type="BoxMesh" id="Box_lamp"]
+material = SubResource("Mat_warm_emission")
+size = Vector3(2.3, 0.08, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="Mat_dark_metal"]
+albedo_color = Color(0.045, 0.055, 0.06, 1)
+metallic = 0.6
+roughness = 0.3
+
+[sub_resource type="BoxMesh" id="Box_pallet"]
+material = SubResource("Mat_dark_metal")
+size = Vector3(3, 0.18, 2)
+
+[sub_resource type="StandardMaterial3D" id="Mat_crate_light"]
+albedo_color = Color(0.48, 0.25, 0.08, 1)
+roughness = 0.82
+
+[sub_resource type="BoxMesh" id="Box_crate_light"]
+material = SubResource("Mat_crate_light")
+size = Vector3(1.25, 0.9, 1.25)
+
+[sub_resource type="StandardMaterial3D" id="Mat_crate"]
+albedo_color = Color(0.28, 0.14, 0.055, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="Box_crate"]
+material = SubResource("Mat_crate")
+size = Vector3(1.15, 0.85, 1.15)
+
+[sub_resource type="StandardMaterial3D" id="Mat_glass"]
+transparency = 1
+albedo_color = Color(0.12, 0.2, 0.22, 0.6)
+metallic = 0.25
+roughness = 0.12
+
+[sub_resource type="BoxMesh" id="Box_window"]
+material = SubResource("Mat_glass")
+size = Vector3(3.2, 1.7, 0.07)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_0ykhv"]
+top_radius = 0.1
+bottom_radius = 0.1
+height = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Mat_customs_tape"]
+albedo_color = Color(0.78, 0.07, 0.04, 1)
+roughness = 0.5
+emission_enabled = true
+emission = Color(0.5, 0.02, 0.01, 1)
+emission_energy_multiplier = 1.2
+
+[sub_resource type="BoxMesh" id="Box_customs_tape"]
+material = SubResource("Mat_customs_tape")
+size = Vector3(1, 0.11, 0.012)
+
+[sub_resource type="BoxMesh" id="Box_sign_post"]
+material = SubResource("Mat_dark_metal")
+size = Vector3(0.12, 2.7, 0.12)
+
+[sub_resource type="BoxMesh" id="Box_sign"]
+material = SubResource("Mat_trim")
+size = Vector3(3.1, 1.15, 0.1)
+
+[node name="MainMenu" type="Node3D" unique_id=325836845]
+script = ExtResource("1_main_menu")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1896201774]
+environment = SubResource("Environment_night")
+
+[node name="MoonFill" type="DirectionalLight3D" parent="." unique_id=1152824643]
+transform = Transform3D(0.88294756, 0.31413782, -0.34888536, 0, 0.7431448, 0.6691306, 0.46947157, -0.59080726, 0.6561579, 0, 0, 0)
+light_color = Color(0.36, 0.47, 0.66, 1)
+light_energy = 0.42
+shadow_enabled = true
+directional_shadow_max_distance = 80.0
+
+[node name="Ground" type="MeshInstance3D" parent="." unique_id=754614459]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, -1)
+mesh = SubResource("Box_ground")
+
+[node name="Warehouse" type="Node3D" parent="." unique_id=700693744]
+
+[node name="BackWall" type="MeshInstance3D" parent="Warehouse" unique_id=984493366]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 4.1, -5)
+mesh = SubResource("Box_wall")
+
+[node name="LeftWall" type="MeshInstance3D" parent="Warehouse" unique_id=1880154307]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 4.1, -2.35)
+mesh = SubResource("Box_side_wall")
+
+[node name="RightWall" type="MeshInstance3D" parent="Warehouse" unique_id=1283815823]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 4.1, -2.35)
+mesh = SubResource("Box_side_wall")
+
+[node name="Roof" type="MeshInstance3D" parent="Warehouse" unique_id=1710638884]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 8.15, -2.35)
+mesh = SubResource("Box_roof")
+
+[node name="LeftPillar" type="MeshInstance3D" parent="Warehouse" unique_id=1530464763]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.35, 3.8, -0.05)
+mesh = SubResource("Box_column")
+
+[node name="RightPillar" type="MeshInstance3D" parent="Warehouse" unique_id=1515368206]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.35, 3.8, -0.05)
+mesh = SubResource("Box_column")
+
+[node name="Dock" type="MeshInstance3D" parent="Warehouse" unique_id=426980068]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.16, -2.45)
+mesh = SubResource("Box_dock")
+
+[node name="DockTrim" type="MeshInstance3D" parent="Warehouse" unique_id=1498715011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.42, 0.36)
+mesh = SubResource("Box_trim")
+
+[node name="UpperTrim" type="MeshInstance3D" parent="Warehouse" unique_id=1691125010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 7.78, -0.05)
+mesh = SubResource("Box_trim")
+
+[node name="LampLeft" type="MeshInstance3D" parent="Warehouse" unique_id=1275680173]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 7.45, -1.5)
+mesh = SubResource("Box_lamp")
+
+[node name="LampCenter" type="MeshInstance3D" parent="Warehouse" unique_id=1155135496]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 7.45, -1.5)
+mesh = SubResource("Box_lamp")
+
+[node name="LampRight" type="MeshInstance3D" parent="Warehouse" unique_id=374366704]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.2, 7.45, -1.5)
+mesh = SubResource("Box_lamp")
+
+[node name="BayLightLeft" type="OmniLight3D" parent="Warehouse" unique_id=1204180071]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 6.1, -1)
+light_color = Color(1, 0.48, 0.16, 1)
+light_energy = 11.0
+shadow_enabled = true
+omni_range = 10.0
+
+[node name="BayLightCenter" type="OmniLight3D" parent="Warehouse" unique_id=1925288838]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 5.9, -1)
+light_color = Color(1, 0.56, 0.24, 1)
+light_energy = 14.0
+shadow_enabled = true
+omni_range = 11.0
+
+[node name="BayLightRight" type="OmniLight3D" parent="Warehouse" unique_id=845936607]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.2, 5.9, -1)
+light_color = Color(1, 0.48, 0.14, 1)
+light_energy = 11.0
+shadow_enabled = true
+omni_range = 10.0
+
+[node name="WarehouseTitle" type="Label3D" parent="Warehouse" unique_id=929725716]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 8, -0.26)
+pixel_size = 0.0022
+billboard = 1
+modulate = Color(0.86, 0.83, 0.72, 1)
+text = "HOLLOW CREEK LOGISTICS"
+font_size = 64
+
+[node name="WarehouseSubtitle" type="Label3D" parent="Warehouse" unique_id=1722891145]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 7.45, -0.27)
+pixel_size = 0.0018
+billboard = 1
+modulate = Color(0.62, 0.58, 0.45, 1)
+text = "BASE  /  LOADING  /  UNLOADING"
+font_size = 22
+outline_size = 8
+
+[node name="PalletA" type="MeshInstance3D" parent="Warehouse" unique_id=1508006525]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1, 0.3, -2.2)
+mesh = SubResource("Box_pallet")
+
+[node name="PalletA2" type="MeshInstance3D" parent="Warehouse" unique_id=689848303]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1, 3.3672981, -4.097372)
+mesh = SubResource("Box_pallet")
+
+[node name="PalletA3" type="MeshInstance3D" parent="Warehouse" unique_id=1278375849]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.1416593, 3.3672981, -4.097372)
+mesh = SubResource("Box_pallet")
+
+[node name="PalletA4" type="MeshInstance3D" parent="Warehouse" unique_id=1417151183]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.941305, 3.3672981, -4.097372)
+mesh = SubResource("Box_pallet")
+
+[node name="CrateA" type="MeshInstance3D" parent="Warehouse" unique_id=32599017]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.85, -2.25)
+mesh = SubResource("Box_crate_light")
+
+[node name="CrateA2" type="MeshInstance3D" parent="Warehouse" unique_id=820377421]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.40548745, 3.8953056, -3.884614)
+mesh = SubResource("Box_crate_light")
+
+[node name="CrateA3" type="MeshInstance3D" parent="Warehouse" unique_id=1174708843]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8840023, 3.8953056, -3.884614)
+mesh = SubResource("Box_crate_light")
+
+[node name="PalletA5" type="MeshInstance3D" parent="Warehouse" unique_id=2072038081]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2.7984262, 3.3672981, -3.2959862)
+mesh = SubResource("Box_pallet")
+
+[node name="CrateA7" type="MeshInstance3D" parent="Warehouse" unique_id=453459999]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2.6118174, 3.8953056, -2.5280824)
+mesh = SubResource("Box_crate_light")
+
+[node name="CrateA8" type="MeshInstance3D" parent="Warehouse" unique_id=901235671]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -2.6157494, 3.8953056, -4.014818)
+mesh = SubResource("Box_crate_light")
+
+[node name="CrateA4" type="MeshInstance3D" parent="Warehouse" unique_id=1403401584]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5017633, 3.8953056, -3.884614)
+mesh = SubResource("Box_crate_light")
+
+[node name="CrateA6" type="MeshInstance3D" parent="Warehouse" unique_id=1892029118]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.608994, 3.8953056, -3.884614)
+mesh = SubResource("Box_crate_light")
+
+[node name="CrateA5" type="MeshInstance3D" parent="Warehouse" unique_id=872183884]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5017633, 4.8294654, -3.884614)
+mesh = SubResource("Box_crate_light")
+
+[node name="CrateB" type="MeshInstance3D" parent="Warehouse" unique_id=675210330]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.7, 0.85, -2.25)
+mesh = SubResource("Box_crate")
+
+[node name="CrateC" type="MeshInstance3D" parent="Warehouse" unique_id=1349900720]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.7, 1.78, -2.25)
+mesh = SubResource("Box_crate")
+
+[node name="PalletB" type="MeshInstance3D" parent="Warehouse" unique_id=1577702202]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.4, 0.3, -2.2)
+mesh = SubResource("Box_pallet")
+
+[node name="CrateD" type="MeshInstance3D" parent="Warehouse" unique_id=331027111]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.1, 0.85, -2.2)
+mesh = SubResource("Box_crate_light")
+
+[node name="CrateE" type="MeshInstance3D" parent="Warehouse" unique_id=948290118]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.4, 0.85, -2.2)
+mesh = SubResource("Box_crate")
+
+[node name="CrateF" type="MeshInstance3D" parent="Warehouse" unique_id=192272081]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.4, 1.78, -2.2)
+mesh = SubResource("Box_crate")
+
+[node name="OfficeWindow" type="MeshInstance3D" parent="Warehouse" unique_id=1583993874]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.7, 4.8, -5.25)
+mesh = SubResource("Box_window")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Warehouse" unique_id=1703890428]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7391698, 7.7023215, -1.521239)
+mesh = SubResource("CylinderMesh_0ykhv")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="Warehouse" unique_id=2051576603]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1997048, 7.7023215, -1.521239)
+mesh = SubResource("CylinderMesh_0ykhv")
+
+[node name="MeshInstance3D3" type="MeshInstance3D" parent="Warehouse" unique_id=1243662995]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9289494, 7.7023215, -1.521239)
+mesh = SubResource("CylinderMesh_0ykhv")
+
+[node name="MeshInstance3D4" type="MeshInstance3D" parent="Warehouse" unique_id=31604645]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.990075, 7.7023215, -1.521239)
+mesh = SubResource("CylinderMesh_0ykhv")
+
+[node name="MeshInstance3D5" type="MeshInstance3D" parent="Warehouse" unique_id=1304278362]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.166035, 7.7023215, -1.521239)
+mesh = SubResource("CylinderMesh_0ykhv")
+
+[node name="MeshInstance3D6" type="MeshInstance3D" parent="Warehouse" unique_id=2132533801]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.22716, 7.7023215, -1.521239)
+mesh = SubResource("CylinderMesh_0ykhv")
+
+[node name="CustomsStencil" type="Label3D" parent="Warehouse" unique_id=1864025517]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 6.32, -4.73)
+pixel_size = 0.0072
+modulate = Color(0.09, 0.075, 0.055, 1)
+text = "CUSTOMS BONDED CARGO"
+font_size = 48
+outline_size = 0
+
+[node name="SealNoticeText" type="Label3D" parent="Warehouse" unique_id=2011743387]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 5.86, -4.72)
+pixel_size = 0.0062
+modulate = Color(0.96, 0.27, 0.13, 1)
+outline_modulate = Color(0.1, 0.02, 0.01, 0.8)
+text = "SEAL 04-17  - TAMPERED"
+font_size = 46
+
+[node name="CrateStencil" type="Label3D" parent="Warehouse" unique_id=1743905122]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5017633, 3.8953056, -3.245)
+pixel_size = 0.0015
+modulate = Color(0.1, 0.075, 0.045, 1)
+text = "POULTRY FEED
+SEAL 04-17"
+font_size = 40
+outline_size = 0
+
+[node name="CustomsTape" type="MeshInstance3D" parent="Warehouse" unique_id=1336420398]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.7, 1.315, -1.662)
+mesh = SubResource("Box_customs_tape")
+
+[node name="YardSign" type="Node3D" parent="." unique_id=889106478]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0, -2)
+
+[node name="Post" type="MeshInstance3D" parent="YardSign" unique_id=1781456083]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, 0)
+mesh = SubResource("Box_sign_post")
+
+[node name="Sign" type="MeshInstance3D" parent="YardSign" unique_id=543745510]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.7, 0)
+mesh = SubResource("Box_sign")
+
+[node name="SignText" type="Label3D" parent="YardSign" unique_id=654268961]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.72, -0.08)
+pixel_size = 0.0017
+billboard = 1
+modulate = Color(0.04, 0.035, 0.02, 1)
+text = "UNLOADING
+ZONE 04"
+font_size = 34
+outline_size = 8
+
+[node name="SignLight" type="OmniLight3D" parent="YardSign" unique_id=1281661374]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, 0.4)
+light_color = Color(1, 0.61, 0.18, 1)
+light_energy = 2.5
+
+[node name="Pickup" parent="." unique_id=1056092871 instance=ExtResource("2_pickup")]
+transform = Transform3D(-0.53013116, 0, 1.4565235, 0, 1.55, 0, -1.4565235, 0, -0.53013116, 4.0015516, 0.2, 3.6839252)
+
+[node name="PickupLight" type="OmniLight3D" parent="." unique_id=1326082619]
+transform = Transform3D(-0.34202015, 0, 0.9396927, 0, 1, 0, -0.9396927, 0, -0.34202015, 3.8777952, 1.9513538, 3.5522614)
+light_color = Color(1, 0.79, 0.54, 1)
+light_energy = 16.0
+omni_range = 12.0
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1938774590]
+transform = Transform3D(0.8290368, -0.07101104, -0.55466706, 0, 0.99190426, -0.12698816, 0.55919415, 0.10527785, 0.8223251, -2.70117, 2.243596, 7.406117)
+current = true
+fov = 57.0
+far = 300.0
+
+[node name="Interface" type="CanvasLayer" parent="." unique_id=2094774591]
+
+[node name="UI" type="Control" parent="Interface" unique_id=2146322577]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="Vignette" type="ColorRect" parent="Interface/UI" unique_id=49919741]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.005, 0.008, 0.012, 0.18)
+
+[node name="LeftShade" type="ColorRect" parent="Interface/UI" unique_id=1719826390]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.42
+anchor_bottom = 1.0
+offset_right = 24.0
+mouse_filter = 2
+color = Color(0.008, 0.012, 0.016, 0.56)
+
+[node name="MenuPanel" type="PanelContainer" parent="Interface/UI" unique_id=1823573819]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.06
+anchor_top = 0.16
+anchor_right = 0.39
+anchor_bottom = 0.84
+offset_left = 22.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+mouse_filter = 1
+
+[node name="Margin" type="MarginContainer" parent="Interface/UI/MenuPanel" unique_id=476241415]
+layout_mode = 2
+theme_override_constants/margin_left = 38
+theme_override_constants/margin_top = 34
+theme_override_constants/margin_right = 38
+theme_override_constants/margin_bottom = 34
+
+[node name="Content" type="VBoxContainer" parent="Interface/UI/MenuPanel/Margin" unique_id=975999901]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Eyebrow" type="Label" parent="Interface/UI/MenuPanel/Margin/Content" unique_id=1433316305]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.57, 0.2, 1)
+theme_override_font_sizes/font_size = 15
+text = "NIGHT SHIFT  /  ROUTE CONTROL"
+
+[node name="Title" type="Label" parent="Interface/UI/MenuPanel/Margin/Content" unique_id=339208416]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.9, 0.81, 1)
+theme_override_font_sizes/font_size = 44
+text = "HOLLOW CREEK"
+
+[node name="Subtitle" type="Label" parent="Interface/UI/MenuPanel/Margin/Content" unique_id=100085743]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.57, 0.62, 0.61, 1)
+theme_override_font_sizes/font_size = 16
+text = "LOGISTICS YARD  /  EST. 1987"
+
+[node name="Rule" type="HSeparator" parent="Interface/UI/MenuPanel/Margin/Content" unique_id=450221626]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="StartButton" type="Button" parent="Interface/UI/MenuPanel/Margin/Content" unique_id=349466590]
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.91, 0.77, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.83, 0.45, 1)
+theme_override_colors/font_hover_color = Color(1, 0.72, 0.28, 1)
+theme_override_font_sizes/font_size = 24
+text = ">  НАЧАТЬ РЕЙС"
+alignment = 0
+
+[node name="SettingsButton" type="Button" parent="Interface/UI/MenuPanel/Margin/Content" unique_id=418339101]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.66, 0.7, 0.67, 1)
+theme_override_colors/font_hover_color = Color(1, 0.72, 0.28, 1)
+theme_override_font_sizes/font_size = 19
+text = "   НАСТРОЙКИ"
+alignment = 0
+
+[node name="ExitButton" type="Button" parent="Interface/UI/MenuPanel/Margin/Content" unique_id=861015808]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.66, 0.7, 0.67, 1)
+theme_override_colors/font_hover_color = Color(1, 0.72, 0.28, 1)
+theme_override_font_sizes/font_size = 19
+text = "   ВЫХОД"
+alignment = 0
+
+[node name="Footer" type="Label" parent="Interface/UI/MenuPanel/Margin/Content" unique_id=1343289240]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.37, 0.42, 0.41, 1)
+theme_override_font_sizes/font_size = 13
+text = "LOCAL TIME  02:17 AM
+WEATHER  CLEAR / 6 C
+MANIFEST  04-17  //  POULTRY FEED"
+
+[node name="CargoHint" type="Label" parent="Interface/UI/MenuPanel/Margin/Content" unique_id=1993184042]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.3, 0.19, 1)
+theme_override_font_sizes/font_size = 13
+text = "CUSTOMS SEAL 04-17  —  BROKEN"
+
+[node name="TopMeta" type="Label" parent="Interface/UI" unique_id=865392688]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -390.0
+offset_top = 34.0
+offset_right = -44.0
+offset_bottom = 78.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.68, 0.72, 0.7, 0.9)
+theme_override_font_sizes/font_size = 14
+text = "HOLLOW CREEK  //  DEPOT 04
+STATUS: READY FOR DISPATCH"
+horizontal_alignment = 2
+
+[node name="SettingsPanel" type="PanelContainer" parent="Interface/UI" unique_id=167735512]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -220.0
+offset_right = 260.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Interface/UI/SettingsPanel" unique_id=82189580]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 28
+
+[node name="Content" type="VBoxContainer" parent="Interface/UI/SettingsPanel/Margin" unique_id=2038686794]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Interface/UI/SettingsPanel/Margin/Content" unique_id=1227462193]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.93, 0.88, 0.75, 1)
+theme_override_font_sizes/font_size = 26
+text = "НАСТРОЙКИ"
+
+[node name="BrightnessTitle" type="Label" parent="Interface/UI/SettingsPanel/Margin/Content" unique_id=1751275221]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.64, 0.68, 0.66, 1)
+theme_override_font_sizes/font_size = 16
+text = "ЯРКОСТЬ"
+
+[node name="BrightnessSlider" type="HSlider" parent="Interface/UI/SettingsPanel/Margin/Content" unique_id=62946048]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+min_value = 0.5
+max_value = 1.5
+step = 0.05
+value = 0.9
+
+[node name="VolumeTitle" type="Label" parent="Interface/UI/SettingsPanel/Margin/Content" unique_id=815830073]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.64, 0.68, 0.66, 1)
+theme_override_font_sizes/font_size = 16
+text = "ГРОМКОСТЬ"
+
+[node name="VolumeSlider" type="HSlider" parent="Interface/UI/SettingsPanel/Margin/Content" unique_id=319286493]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+value = 0.8
+
+[node name="FullscreenToggle" type="CheckButton" parent="Interface/UI/SettingsPanel/Margin/Content" unique_id=638693038]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.64, 0.68, 0.66, 1)
+theme_override_font_sizes/font_size = 16
+text = "ПОЛНЫЙ ЭКРАН"
+
+[node name="CloseButton" type="Button" parent="Interface/UI/SettingsPanel/Margin/Content" unique_id=1092217803]
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.72, 0.3, 1)
+theme_override_font_sizes/font_size = 18
+text = "ЗАКРЫТЬ"
+
+[node name="Hint" type="Label" parent="Interface/UI" unique_id=1390351527]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -50.0
+offset_right = -42.0
+offset_bottom = -28.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.5, 0.55, 0.54, 0.8)
+theme_override_font_sizes/font_size = 13
+text = "ENTER  SELECT        ESC  BACK"
+horizontal_alignment = 2

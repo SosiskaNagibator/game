@@ -51,7 +51,36 @@ extends VehicleBody3D
 ## Сила торможения рабочей тормозной системы на каждое колесо, Н.
 @export_range(0.0, 300.0, 1.0) var max_brake_force: float = 30.0
 ## Сила торможения ручника на задние колёса, Н.
-@export_range(0.0, 300.0, 1.0) var handbrake_force: float = 80.0
+@export_range(0.0, 300.0, 1.0) var handbrake_force: float = 55.0
+## Дополнительное замедление рабочей тормозной системы, м/с².
+## Делает тормозной путь предсказуемым независимо от массы машины.
+@export_range(0.0, 15.0, 0.1) var brake_deceleration: float = 3.5
+## Замедление ручником, м/с².
+@export_range(0.0, 10.0, 0.1) var handbrake_deceleration: float = 1.2
+## Замедление двигателем при отпущенном газе, м/с².
+@export_range(0.0, 5.0, 0.1) var engine_braking_deceleration: float = 0.9
+
+@export_group("Аэродинамика")
+## Сопротивление воздуха: Н на (м/с)². Вместе с двигателем задаёт максималку.
+@export_range(0.0, 5.0, 0.05) var drag_coefficient: float = 1.1
+## Сопротивление качению: Н на (м/с). Работает только когда колёса на земле.
+@export_range(0.0, 200.0, 1.0) var rolling_resistance: float = 26.0
+## Скорость, после которой двигатель перестаёт тянуть, км/ч.
+@export_range(40.0, 250.0, 5.0) var max_speed_kmh: float = 125.0
+
+@export_group("Сцепление и помощники")
+## Доля сцепления задних колёс на ручнике (0.35–0.7 — управляемый занос).
+@export_range(0.2, 1.0, 0.05) var handbrake_grip_factor: float = 0.45
+## Антипробуксовка: насколько снижать тягу при пробуксовке (0 — выключено).
+@export_range(0.0, 0.9, 0.05) var traction_control: float = 0.35
+
+@export_group("Свет")
+## Автоматически включать фары ночью (через DayNightCycle.is_night()).
+@export var headlights_auto: bool = true
+## Держать фары включёнными всегда.
+@export var headlights_always_on: bool = false
+## Яркость фар.
+@export_range(0.5, 12.0, 0.1) var headlight_energy: float = 3.2
 
 # Все колёса машины (заполняется в _ready).
 var _all_wheels: Array[VehicleWheel3D] = []
@@ -66,6 +95,13 @@ var _wheelbase: float = 3.4
 
 # Текущий (сглаженный) угол руля.
 var _current_steer: float = 0.0
+# Половина колеи передних колёс, м (для руля Аккермана).
+var _half_track: float = 0.86
+# Фары машины (создаются в _ready).
+var _headlights: Array[SpotLight3D] = []
+# Базовое сцепление каждого колеса, чтобы возвращать его после ручника.
+var _base_friction: Dictionary = {}
+var _headlights_on: bool = false
 
 ## Игрок, который сейчас управляет машиной. null — машина пустая.
 var driver: Node = null
@@ -82,12 +118,14 @@ var _wheel_effects: Array[Dictionary] = []
 func _ready() -> void:
 	# Машина не должна "засыпать" на стоянке, иначе первый газ может не сработать.
 	can_sleep = false
+	add_to_group("vehicles")
 	_collect_wheels()
 	_hide_body_wheels()
 
 	_first_person_camera = get_vehicle_camera()
 	_third_person_camera = get_node_or_null("ThirdPersonCamera") as Camera3D
 	_setup_wheel_effects()
+	_setup_headlights()
 
 
 ## Скрываем колёса, встроенные в модель кузова: ими управляют VehicleWheel3D.
@@ -143,6 +181,7 @@ func _collect_wheels() -> void:
 
 		var wheel: VehicleWheel3D = child
 		_all_wheels.append(wheel)
+		_base_friction[wheel] = wheel.wheel_friction_slip
 
 		if wheel.use_as_steering:
 			_steering_wheels.append(wheel)
@@ -151,6 +190,11 @@ func _collect_wheels() -> void:
 		# В Godot перед машины — это -Z, значит зад — это +Z.
 		if wheel.position.z > 0.0:
 			_rear_wheels.append(wheel)
+
+	if _steering_wheels.size() >= 2:
+		_half_track = absf(
+			_steering_wheels[0].position.x - _steering_wheels[1].position.x
+		) * 0.5
 
 	if _steering_wheels.is_empty():
 		push_warning("BaseVehicle: ни одному колесу не включён 'Use as Steering'.")
@@ -361,6 +405,7 @@ func _make_chip_process() -> ParticleProcessMaterial:
 
 func _physics_process(delta: float) -> void:
 	_update_wheel_effects(delta)
+	_update_headlights()
 
 	# Пустой машиной никто не управляет — держим её на стояночном тормозе.
 	if not is_occupied():
@@ -370,9 +415,49 @@ func _physics_process(delta: float) -> void:
 	# Скорость вдоль "носа" машины (-Z), в м/с. Положительная — вперёд.
 	var forward_speed: float = linear_velocity.dot(-global_transform.basis.z)
 
+	_update_handbrake_grip(delta)
 	_update_steering(delta, forward_speed)
 	_update_engine_and_brakes(forward_speed)
+	_update_aero()
 	_update_stability(forward_speed)
+
+
+# --- Свет -----------------------------------------------------------------
+
+
+## Две фары в передней части кузова. Включаются автоматически ночью.
+func _setup_headlights() -> void:
+	for side in [-1.0, 1.0]:
+		var light := SpotLight3D.new()
+		light.name = "HeadlightL" if side < 0.0 else "HeadlightR"
+		light.position = Vector3(0.62 * side, 0.78, -2.45)
+		# Чуть вниз и в стороны, как настоящие фары.
+		light.rotation_degrees = Vector3(-4.0, 5.0 * side, 0.0)
+		light.light_color = Color(1.0, 0.95, 0.82)
+		light.light_energy = headlight_energy
+		light.spot_range = 55.0
+		light.spot_angle = 33.0
+		light.spot_angle_attenuation = 0.9
+		light.spot_attenuation = 1.0
+		light.shadow_enabled = false
+		light.visible = false
+		add_child(light)
+		_headlights.append(light)
+
+
+func _update_headlights() -> void:
+	var on: bool = headlights_always_on
+	if headlights_auto and not on:
+		var cycle := get_tree().get_first_node_in_group("day_night")
+		if cycle != null and cycle.has_method("is_night"):
+			on = cycle.is_night()
+
+	if on == _headlights_on:
+		return
+	_headlights_on = on
+	for light in _headlights:
+		light.visible = on
+
 
 
 ## Плавный поворот руля (lerp) + возврат в центр + ограничение на скорости.
@@ -400,12 +485,36 @@ func _update_steering(delta: float, forward_speed: float) -> void:
 	var weight: float = clampf(smoothing * delta, 0.0, 1.0)
 	_current_steer = lerp(_current_steer, target_steer, weight)
 
-	# Применяем угол только к рулевым колёсам.
+	# Применяем угол к рулевым колёсам (с геометрией Аккермана).
+	_apply_steering_angles(_current_steer)
+
+
+## Руль Аккермана: внутреннее колесо поворачивает сильнее внешнего.
+## Так машина катится по дуге без бокового скольжения шин.
+func _apply_steering_angles(angle: float) -> void:
+	if _steering_wheels.is_empty():
+		return
+	if absf(angle) < 0.01 or _half_track < 0.05:
+		for wheel in _steering_wheels:
+			wheel.steering = angle
+		return
+
+	var turn_direction: float = signf(angle)
+	var turn_radius: float = _wheelbase / tan(absf(angle))
+	var angle_limit: float = max_steer_angle * 1.15
+
 	for wheel in _steering_wheels:
-		wheel.steering = _current_steer
+		var is_left: bool = wheel.position.x < 0.0
+		var is_inner: bool = (is_left and turn_direction > 0.0) or (not is_left and turn_direction < 0.0)
+		var radius: float = (
+			turn_radius - _half_track if is_inner else turn_radius + _half_track
+		)
+		radius = maxf(radius, 1.0)
+		var wheel_angle: float = atan(_wheelbase / radius)
+		wheel.steering = clampf(wheel_angle * turn_direction, -angle_limit, angle_limit)
 
 
-## Стабилизация кузова на скорости: гасим неестественный крен и добавляем прижим.
+## Стабилизация кузова на скорости: гасим неестественный крен.
 func _update_stability(forward_speed: float) -> void:
 	var speed: float = absf(forward_speed)
 	var speed_kmh: float = speed * 3.6
@@ -413,11 +522,7 @@ func _update_stability(forward_speed: float) -> void:
 		return
 
 	# Стабилизация нужна только когда колёса реально стоят на земле.
-	var grounded: int = 0
-	for wheel in _all_wheels:
-		if wheel.is_in_contact():
-			grounded += 1
-	if grounded < 2:
+	if _grounded_wheels() < 2:
 		return
 
 	var up: Vector3 = global_transform.basis.y
@@ -441,35 +546,96 @@ func _update_stability(forward_speed: float) -> void:
 
 	apply_torque(forward * torque * speed_ratio)
 
-	if downforce_coefficient > 0.0:
-		apply_central_force(-up * downforce_coefficient * speed * speed)
+
+## Аэродинамика: сопротивление воздуха, качение и прижимная сила.
+func _update_aero() -> void:
+	var speed: float = linear_velocity.length()
+	if speed < 0.05:
+		return
+
+	var grounded: int = _grounded_wheels()
+
+	# Сопротивление воздуха растёт как квадрат скорости — оно же ограничивает
+	# максималку, поэтому двигатель не «тянет» машину бесконечно.
+	apply_central_force(-linear_velocity / speed * drag_coefficient * speed * speed)
+
+	if grounded >= 2:
+		# Сопротивление качению: пропорционально скорости, только на земле.
+		apply_central_force(-linear_velocity * rolling_resistance)
+
+		# Прижимная сила помогает держать колёса на дороге на скорости.
+		if downforce_coefficient > 0.0:
+			apply_central_force(
+				-global_transform.basis.y * downforce_coefficient * speed * speed
+			)
+
+
+func _grounded_wheels() -> int:
+	var grounded: int = 0
+	for wheel in _all_wheels:
+		if wheel.is_in_contact():
+			grounded += 1
+	return grounded
+
+
+## Ручник: задние колёса теряют часть сцепления — машина уходит в занос.
+func _update_handbrake_grip(delta: float) -> void:
+	var handbrake: bool = Input.is_action_pressed("handbrake")
+	var factor: float = handbrake_grip_factor if handbrake else 1.0
+	var rate: float = 18.0 * delta
+	for wheel in _rear_wheels:
+		var base: float = float(_base_friction.get(wheel, wheel.wheel_friction_slip))
+		wheel.wheel_friction_slip = move_toward(
+			wheel.wheel_friction_slip, base * factor, rate
+		)
 
 
 ## Газ, рабочий тормоз, задний ход и ручник.
 func _update_engine_and_brakes(forward_speed: float) -> void:
 	# get_axis: "brake" -> -1, "accelerate" -> +1.
 	var throttle: float = Input.get_axis("brake", "accelerate")
+	var handbrake: bool = Input.is_action_pressed("handbrake")
 
 	var engine_force: float = 0.0
 	var brake_force: float = 0.0
+	# Центральное замедление: гарантирует предсказуемый тормозной путь
+	# независимо от того, как физический движок считает силу колодок.
+	var deceleration: float = 0.0
 
 	if throttle > 0.01:
 		# Едем назад — педаль газа работает как тормоз.
 		if forward_speed < -1.0:
 			brake_force = max_brake_force * throttle
+			deceleration = brake_deceleration * throttle
 		else:
-			engine_force = throttle * max_engine_force
+			engine_force = throttle * _engine_force_at_speed(forward_speed)
 	elif throttle < -0.01:
 		# Едем вперёд — педаль тормоза тормозит, иначе включается задний ход.
 		if forward_speed > 1.0:
 			brake_force = max_brake_force * -throttle
+			deceleration = brake_deceleration * -throttle
 		else:
-			engine_force = throttle * max_engine_force * reverse_force_multiplier
+			engine_force = (
+				throttle * _engine_force_at_speed(forward_speed) * reverse_force_multiplier
+			)
+	else:
+		# Газ отпущен — двигатель понемногу тормозит машину.
+		if absf(forward_speed) > 2.0:
+			deceleration = engine_braking_deceleration
 
-	# Ручник: блокируем задние колёса и снимаем тягу.
-	var handbrake: bool = Input.is_action_pressed("handbrake")
+	# Антипробуксовка: не даём ведущим колёсам бесконечно буксовать.
+	engine_force *= _traction_factor()
+
+	# Ручник снимает тягу и добавляет замедление, но не «якорит» машину,
+	# иначе управляемый занос превращается в резкую остановку.
 	if handbrake:
 		engine_force = 0.0
+		deceleration = maxf(deceleration, handbrake_deceleration)
+
+	# Центральная сила торможения направлена против движения.
+	if deceleration > 0.0 and absf(forward_speed) > 0.15:
+		var direction: float = signf(forward_speed)
+		apply_central_force(global_transform.basis.z * deceleration * mass * direction)
 
 	# Сила тяги делится между ведущими колёсами, чтобы max_engine_force
 	# оставалась суммарной силой, а не силой на каждое колесо.
@@ -487,6 +653,29 @@ func _update_engine_and_brakes(forward_speed: float) -> void:
 	if handbrake:
 		for wheel in _rear_wheels:
 			wheel.brake = maxf(wheel.brake, handbrake_force)
+
+
+## Тяга двигателя: падает к максимальной скорости, как у реальной коробки.
+func _engine_force_at_speed(forward_speed: float) -> float:
+	var speed_kmh: float = absf(forward_speed) * 3.6
+	var ratio: float = clampf(speed_kmh / maxf(max_speed_kmh, 1.0), 0.0, 1.0)
+	var falloff: float = 1.0 - 0.85 * ratio * ratio
+	return max_engine_force * maxf(falloff, 0.08)
+
+
+## Коэффициент тяги антипробуксовки (1 — полная тяга).
+func _traction_factor() -> float:
+	if traction_control <= 0.0:
+		return 1.0
+	var worst: float = 1.0
+	var measured: bool = false
+	for wheel in _traction_wheels:
+		if wheel.is_in_contact():
+			measured = true
+			worst = minf(worst, wheel.get_skidinfo())
+	if not measured or worst >= 0.75:
+		return 1.0
+	return lerpf(1.0 - traction_control, 1.0, clampf(worst / 0.75, 0.0, 1.0))
 
 
 # --- Взаимодействие с игроком ---------------------------------------------
@@ -567,3 +756,8 @@ func _apply_park_brake() -> void:
 	for wheel in _all_wheels:
 		wheel.engine_force = 0.0
 		wheel.brake = maxf(max_brake_force, 20.0)
+	# После выхода из машины возвращаем задним колёсам обычное сцепление,
+	# иначе машина останется «на ручнике» до следующей поездки.
+	for wheel in _rear_wheels:
+		var base: float = float(_base_friction.get(wheel, wheel.wheel_friction_slip))
+		wheel.wheel_friction_slip = base

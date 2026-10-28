@@ -32,12 +32,20 @@ func _build() -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 
-	var grass_deep := Color(0.10, 0.19, 0.055)
-	var grass_mid := Color(0.18, 0.29, 0.085)
-	var grass_light := Color(0.28, 0.39, 0.115)
-	var dry_grass := Color(0.47, 0.43, 0.24)
-	var dirt := Color(0.36, 0.30, 0.21)
-	var gravel := Color(0.38, 0.34, 0.27)
+	# Лесная подстилка: тёмный мох, хвоя, прелая листва.
+	var floor_deep := Color(0.050, 0.082, 0.030)
+	var floor_mid := Color(0.085, 0.130, 0.048)
+	var floor_moss := Color(0.125, 0.185, 0.062)
+	var leaf_litter := Color(0.185, 0.145, 0.085)
+
+	# Открытые места: поляны и деревенские луга.
+	var grass_deep := Color(0.105, 0.175, 0.052)
+	var grass_mid := Color(0.185, 0.280, 0.082)
+	var grass_light := Color(0.295, 0.385, 0.110)
+	var dry_grass := Color(0.455, 0.420, 0.230)
+
+	var dirt := Color(0.325, 0.265, 0.180)
+	var gravel := Color(0.370, 0.335, 0.265)
 
 	for iz in resolution:
 		var z: float = -half + float(iz) * step
@@ -49,29 +57,53 @@ func _build() -> void:
 			var n: float = color_noise.get_noise_2d(x * 1.15, z * 1.15) * 0.5 + 0.5
 			var broad: float = color_noise.get_noise_2d(x * 0.22 + 120.0, z * 0.22 - 40.0) * 0.5 + 0.5
 			var fine: float = color_noise.get_noise_2d(x * 3.3 - 80.0, z * 3.3 + 33.0) * 0.5 + 0.5
-			var col: Color = grass_deep.lerp(grass_mid, smoothstep(0.05, 0.85, n))
-			col = col.lerp(grass_light, smoothstep(0.25, 0.95, n * 0.55 + broad * 0.45) * 0.8)
 
-			# Выгоревшие луговые пятна — неровные, разного размера.
+			# Основа — тёмный лесной пол.
+			var col: Color = floor_deep.lerp(floor_mid, smoothstep(0.08, 0.82, n))
+			col = col.lerp(floor_moss, smoothstep(0.30, 0.95, n * 0.5 + broad * 0.5) * 0.7)
+
+			# Пятна прелой листвы и хвои под кронами.
+			var litter: float = smoothstep(0.52, 0.86, broad * 0.6 + fine * 0.4)
+			col = col.lerp(leaf_litter, litter * 0.42)
+
+			# Поляны, двор и деревня — луговые, более светлые.
+			var clearing: float = RuralHeight.base_clearing_mask(x, z)
+			var village: float = RuralHeight.settlement_mask(x, z)
+			var glade: float = RuralHeight.glade_mask(x, z)
+			var open: float = clampf(maxf(maxf(clearing, village), glade), 0.0, 1.0)
+
+			var meadow: Color = grass_deep.lerp(grass_mid, smoothstep(0.05, 0.85, n))
+			meadow = meadow.lerp(grass_light, smoothstep(0.25, 0.95, n * 0.55 + broad * 0.45) * 0.8)
 			var dry: float = smoothstep(0.54, 0.88, broad) * (0.45 + 0.55 * fine)
-			col = col.lerp(dry_grass, dry * 0.5)
+			meadow = meadow.lerp(dry_grass, dry * 0.45)
+			col = col.lerp(meadow, open)
 
-			# Тёмные пятна сырой земли/бурьяна между луговинами.
-			var patch: float = smoothstep(0.68, 0.94, fine * 0.7 + n * 0.3)
-			col = col.lerp(Color(0.15, 0.21, 0.08), patch * 0.35)
+			# Дороги: земляное полотно с узкой пыльной обочиной.
+			var road: Vector3 = ForestRoads.sample3(x, z)
+			if road.x < road.z + 2.2:
+				var road_mix: float = 1.0 - smoothstep(road.z * 0.94, road.z + 1.05, road.x)
+				var overgrown: float = ForestRoads.overgrown_at(x, z)
+				var dirt_col: Color = dirt.lerp(Color(0.46, 0.39, 0.28), n)
+				if overgrown > 0.4:
+					dirt_col = dirt_col.lerp(Color(0.215, 0.235, 0.105), overgrown * 0.45)
+				col = col.lerp(dirt_col, road_mix * 0.9)
 
-			var road_distance: float = absf(x - RuralHeight.road_x(z))
-			var road_mix: float = 1.0 - smoothstep(3.6, 5.6, road_distance)
-			var dirt_col: Color = dirt.lerp(Color(0.50, 0.43, 0.32), n)
-			col = col.lerp(dirt_col, road_mix * 0.88)
-
+			# Утоптанный двор базы: гравий.
 			var yard: float = RuralHeight.yard_color_mask(x, z)
-			var gravel_col: Color = gravel.lerp(Color(0.30, 0.26, 0.20), fine * 0.55)
+			var gravel_col: Color = gravel.lerp(Color(0.285, 0.250, 0.195), fine * 0.55)
 			gravel_col = gravel_col * (0.88 + n * 0.26)
-			# Утоптанная тёмная кромка двора.
 			var rim: float = smoothstep(0.45, 0.85, yard) * (1.0 - smoothstep(0.88, 1.0, yard))
 			gravel_col = gravel_col.darkened(rim * 0.22)
 			col = col.lerp(gravel_col, smoothstep(0.18, 0.92, yard))
+
+			# Деревенские дворы чуть вытоптаны у дороги.
+			if village > 0.3:
+				var worn: float = smoothstep(road.z + 0.8, road.z + 5.5, road.x)
+				col = col.lerp(Color(0.315, 0.285, 0.185), (1.0 - worn) * village * 0.35)
+
+			# В чаще темнее: меньше света до земли.
+			var density: float = RuralHeight.forest_density(x, z)
+			col = col.darkened(clampf(density * 0.30, 0.0, 0.30))
 
 			st.set_color(col)
 			st.add_vertex(Vector3(x, y, z))
@@ -116,6 +148,9 @@ func _build() -> void:
 	var body := StaticBody3D.new()
 	body.name = "TerrainBody"
 	body.scale = Vector3(step, step, step)
+	# Метка «это земля»: по ней редактор ландшафта отличает рельеф от прочих тел,
+	# деревьев, заборов и построек, сквозь которые луч должен проходить.
+	body.set_meta("terrain_ground", true)
 
 	var collision := CollisionShape3D.new()
 	collision.name = "TerrainCollision"

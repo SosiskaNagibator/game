@@ -72,10 +72,10 @@ void fragment() {
 
 	// Крупные пятна выгоревшей травы.
 	float patches = fbm(wxz * 0.035);
-	base = mix(base, base * dry_tint * 1.12, smoothstep(0.42, 0.78, patches) * 0.30);
+	base = mix(base, base * dry_tint * 1.12, smoothstep(0.50, 0.86, patches) * 0.26);
 
 	// Проплешины земли: не дают полю выглядеть однотонной заливкой.
-	float soil = smoothstep(0.52, 0.80, fbm(wxz * 0.19 + vec2(31.0, 7.0)));
+	float soil = smoothstep(0.60, 0.88, fbm(wxz * 0.19 + vec2(31.0, 7.0)));
 	base = mix(base, soil_tint, soil * soil_strength);
 
 	// Кочек и пучков травы: несколько масштабов, чтобы фактура читалась

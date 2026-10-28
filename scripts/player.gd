@@ -47,8 +47,11 @@ var _crouch_height: float = 1.0
 var _pitch: float = 0.0
 # Игрок сейчас за рулём?
 var _driving: bool = false
+var _landscape_editing: bool = false
 # Машина, которой управляет игрок.
 var _vehicle: BaseVehicle = null
+# Подсказка от других систем (перестановка деревьев и т.п.).
+var _hint_override: String = ""
 
 
 func _ready() -> void:
@@ -63,6 +66,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# В редакторе ландшафта мышь занята установкой объектов, но ходить можно (B).
 	if _driving:
 		return
 
@@ -73,12 +77,24 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(_delta: float) -> void:
-	# Подсказка внизу экрана, когда игрок рядом с машиной.
-	if not _driving:
-		_hint.visible = _find_nearest_vehicle() != null
+	# За рулём подсказку показывает сама машина.
+	if _driving:
+		return
+
+	# Подсказка от другой системы важнее подсказки про машину.
+	if not _hint_override.is_empty():
+		_hint.text = _hint_override
+		_hint.visible = true
+		return
+
+	_hint.text = "[E] Сесть в машину"
+	_hint.visible = _find_nearest_vehicle() != null
 
 
 func _input(event: InputEvent) -> void:
+	if _landscape_editing:
+		return
+
 	# E — сесть в машину или выйти из неё.
 	if event.is_action_pressed("interact"):
 		if _driving:
@@ -89,7 +105,7 @@ func _input(event: InputEvent) -> void:
 
 	# Клик по окну возвращает захват мыши (например, после паузы).
 	if event is InputEventMouseButton and event.pressed:
-		if not get_tree().paused and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
+		if not _landscape_editing and not get_tree().paused and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 	if _driving:
@@ -243,3 +259,32 @@ func _leave_vehicle() -> void:
 	_camera.current = true
 
 	_hint.text = "[E] Сесть в машину"
+
+
+# --- Публичный API для других систем ----------------------------------------
+
+
+## Камера от первого лица (нужна для наведения на объекты).
+func get_camera() -> Camera3D:
+	return _camera
+
+
+## Игрок сейчас за рулём?
+func is_driving() -> bool:
+	return _driving
+
+
+func set_landscape_editing(enabled: bool) -> void:
+	_landscape_editing = enabled
+	if enabled:
+		velocity = Vector3.ZERO
+
+
+## Показать подсказку поверх стандартных (деревья, склад и т.п.).
+func set_hint_override(text: String) -> void:
+	_hint_override = text
+
+
+## Убрать внешнюю подсказку.
+func clear_hint_override() -> void:
+	_hint_override = ""
