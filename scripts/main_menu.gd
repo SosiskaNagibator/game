@@ -30,6 +30,12 @@ func _ready() -> void:
 	fullscreen_toggle = get_node_or_null("Interface/UI/SettingsPanel/Margin/Content/FullscreenToggle") as CheckButton
 	world_environment = get_node_or_null("WorldEnvironment") as WorldEnvironment
 
+	# Фоновая музыка меню должна играть непрерывно, даже если импорт
+	# пересоздан без включённого цикла.
+	var music := get_node_or_null("MenuMusic") as AudioStreamPlayer
+	if music != null and music.stream is AudioStreamOggVorbis:
+		(music.stream as AudioStreamOggVorbis).loop = true
+
 	if start_button:
 		start_button.pressed.connect(_on_start_pressed)
 		start_button.grab_focus()

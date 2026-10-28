@@ -10,11 +10,22 @@ extends Node3D
 ## Зоны совпадают с разметкой из farmstead.gd.
 
 const CAPACITY := 6
-const CRATE_SIZE := 0.68
 const STOP_SPEED := 1.5
 const LOAD_TIME := 1.2
 const UNLOAD_TIME := 1.0
 const CARGO_VALUE := 150
+
+## Модель ящика (2.195 м в оригинале) и раскладка в кузове пикапа.
+const CRATE_SCENE: PackedScene = preload(
+	"res://assets/models/wooden_box/low_poly_wooden_box.glb"
+)
+const CRATE_SCALE := 0.28
+## Нижняя грань модели в её локальных координатах (пивот у центра по X/Z).
+const CRATE_BOTTOM_LOCAL := -0.1098
+const BED_FLOOR_Y := 0.86
+const BED_CENTER_Z := 1.66
+const CRATE_ROW_SPACING := 0.64
+const CRATE_COLUMN_X := 0.33
 
 ## Зона погрузки: настил весов перед погрузочным доком.
 ## Ноль — взять позицию от площадки скрытой базы.
@@ -26,6 +37,8 @@ const CARGO_VALUE := 150
 @export var load_time_per_crate: float = LOAD_TIME
 @export var unload_time_per_crate: float = UNLOAD_TIME
 @export var cargo_value: int = CARGO_VALUE
+## Масса одного ящика, кг. Каждый погруженный ящик увеличивает массу машины.
+@export_range(1.0, 500.0, 1.0) var cargo_box_mass: float = 75.0
 
 var _loaded: int = 0
 var _money: int = 0
@@ -37,11 +50,10 @@ var _message_timer: float = 0.0
 
 var _crate_owner: Node3D = null
 var _crate_nodes: Array[Node3D] = []
+## Масса машины без груза, чтобы всегда возвращаться к ней при разгрузке.
+var _base_vehicle_mass: float = 0.0
 var _status_label: Label = null
 var _hint_label: Label = null
-
-var _crate_mat: StandardMaterial3D
-var _slat_mat: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -54,18 +66,7 @@ func _ready() -> void:
 		unload_zone_center = Vector3(
 			RuralHeight.BASE_CENTER.x + 4.0, 0.0, RuralHeight.BASE_CENTER.y + 13.0
 		)
-	_create_materials()
 	_create_hud()
-
-
-func _create_materials() -> void:
-	_crate_mat = StandardMaterial3D.new()
-	_crate_mat.albedo_color = Color(0.53, 0.40, 0.24)
-	_crate_mat.roughness = 0.9
-
-	_slat_mat = StandardMaterial3D.new()
-	_slat_mat.albedo_color = Color(0.30, 0.22, 0.13)
-	_slat_mat.roughness = 0.95
 
 
 func _create_hud() -> void:
@@ -140,6 +141,7 @@ func _process(delta: float) -> void:
 		if _load_progress >= load_time_per_crate:
 			_load_progress -= load_time_per_crate
 			_loaded += 1
+			_apply_cargo_mass()
 			_apply_crate_visibility()
 			if _loaded >= CAPACITY:
 				_message = "Погрузка завершена"
@@ -156,6 +158,7 @@ func _process(delta: float) -> void:
 		if _unload_progress >= unload_time_per_crate:
 			_unload_progress -= unload_time_per_crate
 			_loaded -= 1
+			_apply_cargo_mass()
 			_apply_crate_visibility()
 			_money += cargo_value
 			_delivered += 1
@@ -192,6 +195,8 @@ func _is_stopped(vehicle: VehicleBody3D) -> bool:
 
 func _bind_vehicle(vehicle: VehicleBody3D) -> void:
 	_crate_owner = vehicle
+	# Запоминаем снаряжённую массу машины: груз всегда считается поверх неё.
+	_base_vehicle_mass = vehicle.mass
 	for node in _crate_nodes:
 		if is_instance_valid(node):
 			node.queue_free()
@@ -205,37 +210,33 @@ func _bind_vehicle(vehicle: VehicleBody3D) -> void:
 		crate.visible = i < _loaded
 		_crate_nodes.append(crate)
 
+	_apply_cargo_mass()
+
 
 func _slot_position(index: int) -> Vector3:
 	var row: int = int(index / 2.0)
 	var column: int = index % 2
 	return Vector3(
-		-0.55 + float(column) * 1.1,
-		1.38,
-		0.95 + float(row) * 0.75
+		-CRATE_COLUMN_X + float(column) * CRATE_COLUMN_X * 2.0,
+		BED_FLOOR_Y - CRATE_BOTTOM_LOCAL * CRATE_SCALE,
+		BED_CENTER_Z + (float(row) - 1.0) * CRATE_ROW_SPACING
 	)
 
 
 func _make_crate() -> Node3D:
-	var root := Node3D.new()
+	var crate := CRATE_SCENE.instantiate() as Node3D
+	crate.scale = Vector3.ONE * CRATE_SCALE
+	return crate
 
-	var box := MeshInstance3D.new()
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(CRATE_SIZE, CRATE_SIZE, CRATE_SIZE)
-	box.mesh = mesh
-	box.material_override = _crate_mat
-	root.add_child(box)
 
-	for y in [-0.3, 0.3]:
-		var slat := MeshInstance3D.new()
-		var slat_mesh := BoxMesh.new()
-		slat_mesh.size = Vector3(CRATE_SIZE * 1.02, 0.07, CRATE_SIZE * 1.02)
-		slat.mesh = slat_mesh
-		slat.position = Vector3(0.0, y * CRATE_SIZE, 0.0)
-		slat.material_override = _slat_mat
-		root.add_child(slat)
-
-	return root
+## Масса машины = снаряжённая масса + масса всех погруженных ящиков.
+func _apply_cargo_mass() -> void:
+	if _crate_owner == null or not is_instance_valid(_crate_owner):
+		return
+	var vehicle := _crate_owner as VehicleBody3D
+	if vehicle == null:
+		return
+	vehicle.mass = _base_vehicle_mass + float(_loaded) * cargo_box_mass
 
 
 func _apply_crate_visibility() -> void:

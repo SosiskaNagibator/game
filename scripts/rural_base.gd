@@ -9,14 +9,6 @@ extends Node3D
 @export var ambient_energy: float = 1.0
 @export var saturation: float = 1.02
 
-## Точка появления игрока — на лесовозном отвороте перед воротами базы,
-## лицом к доку. Держим здесь, чтобы старт всегда был у скрытой базы.
-const PLAYER_SPAWN := Vector2(-213.5, -126.0)
-const PLAYER_YAW := 0.47
-const VEHICLE_SPAWN := Vector2(-207.0, -116.5)
-const VEHICLE_YAW := 0.47
-
-
 func _ready() -> void:
 	_place_start()
 	var sun := get_node_or_null("Sun") as DirectionalLight3D
@@ -41,17 +33,16 @@ func _ready() -> void:
 		env.adjustment_saturation = saturation
 		env.adjustment_contrast = 1.05
 
-
 func _place_start() -> void:
 	var player := get_node_or_null("Player") as Node3D
 	if player != null:
-		var py: float = RuralHeight.terrain_height(PLAYER_SPAWN.x, PLAYER_SPAWN.y)
-		player.position = Vector3(PLAYER_SPAWN.x, py + 0.15, PLAYER_SPAWN.y)
-		player.rotation = Vector3(0.0, PLAYER_YAW, 0.0)
+		# Берем X и Z из редактора, а высоту Y считаем по рельефу
+		var py: float = RuralHeight.terrain_height(player.position.x, player.position.z)
+		player.position.y = py + 0.15
 
 	var vehicle := get_node_or_null("BaseVehicle") as Node3D
 	if vehicle != null:
-		var vy: float = RuralHeight.terrain_height(VEHICLE_SPAWN.x, VEHICLE_SPAWN.y)
-		vehicle.position = Vector3(VEHICLE_SPAWN.x, vy + 0.45, VEHICLE_SPAWN.y)
-		vehicle.rotation = Vector3(0.0, VEHICLE_YAW, 0.0)
-
+		# Берем X и Z из редактора, а высоту Y считаем по рельефу
+		var vy: float = RuralHeight.terrain_height(vehicle.position.x, vehicle.position.z)
+		vehicle.position.y = vy + 0.45
+		# Строку с vehicle.rotation мы убрали, чтобы машина сохраняла ваш поворот
