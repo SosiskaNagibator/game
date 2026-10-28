@@ -9,8 +9,6 @@
 [ext_resource type="Script" uid="uid://d2lusy7blc3r5" path="res://scripts/farmstead.gd" id="7_farmstead"]
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="8_player"]
 [ext_resource type="PackedScene" uid="uid://c5bn1rd0s2pf0" path="res://scenes/BaseVehicle.tscn" id="9_vehicle"]
-[ext_resource type="PackedScene" uid="uid://ywhhycey5gcx" path="res://assets/models/usa_pickup/usa_pickup.glb" id="10_st1pv"]
-[ext_resource type="PackedScene" uid="uid://dvnye2e52t82k" path="res://assets/models/old_pickup/old_pickup.glb" id="10_x16ky"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("1_sky")
@@ -93,12 +91,3 @@ transform = Transform3D(0.99280864, 0, -0.119712204, 0, 1, 0, 0.119712204, 0, 0.
 [node name="BaseVehicle" parent="." unique_id=1056092871 instance=ExtResource("9_vehicle")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.3, -0.45, 120.5)
 center_of_mass = Vector3(0, 0.62, 0)
-
-[node name="old_pickup" parent="." unique_id=1522103569 instance=ExtResource("10_x16ky")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.93416977, -0.67825425, 129.81027)
-
-[node name="Sketchfab_Scene" parent="." unique_id=980853750 instance=ExtResource("10_st1pv")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0381176, -0.7174952, 130.51666)
-
-[node name="Sketchfab_Scene2" parent="." unique_id=2057146603 instance=ExtResource("10_st1pv")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5290432, -0.8268528, 135.40363)
