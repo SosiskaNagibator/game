@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://bx54k1nrkmlnh"]
+
+[ext_resource type="PackedScene" uid="uid://dvnye2e52t82k" path="res://assets/models/old_pickup/old_pickup.glb" id="1_5ythc"]
+
+[node name="old_pickup" unique_id=1962428543 instance=ExtResource("1_5ythc")]
+
+[node name="Wheel_FL" parent="." index="8" unique_id=726013675]
+transform = Transform3D(1, 0, 0, 0, 1, 1.7484555e-07, 0, -1.7484555e-07, 1, -0.835, 0.36850256, -1.78)

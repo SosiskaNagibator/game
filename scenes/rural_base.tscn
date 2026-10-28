@@ -12,6 +12,7 @@
 [ext_resource type="Script" uid="uid://3jwr4y5tabtq" path="res://scripts/cargo_system.gd" id="11_cargo"]
 [ext_resource type="Script" uid="uid://oenv7eydrp8a" path="res://scripts/tree_mover.gd" id="12_treemover"]
 [ext_resource type="Script" uid="uid://bgxtjh35ltvem" path="res://scripts/settlement.gd" id="13_settlement"]
+[ext_resource type="PackedScene" uid="uid://cf3cgh44h8qxs" path="res://scenes/Decor.tscn" id="14_decor"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
 sky_top_color = Color(0.2, 0.4, 0.8, 1)
@@ -95,11 +96,13 @@ center_of_mass = Vector3(0, 0.62, 0)
 script = ExtResource("10_st1pv")
 world_env = NodePath("../WorldEnvironment")
 player_or_camera = NodePath("../Player")
-time_scale = 1.0
+time_scale = 5.0
 start_time = 8.0
 
 [node name="CargoSystem" type="Node3D" parent="." unique_id=2094774591]
 script = ExtResource("11_cargo")
+
+[node name="Decor" parent="." unique_id=9999999 instance=ExtResource("14_decor")]
 
 [node name="TreeMover" type="Node3D" parent="." unique_id=2094774592]
 script = ExtResource("12_treemover")
