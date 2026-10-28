@@ -11,15 +11,24 @@
 [ext_resource type="Script" uid="uid://bhgfn8er3p7hu" path="res://scripts/day_night_cycle.gd" id="10_st1pv"]
 [ext_resource type="Script" uid="uid://3jwr4y5tabtq" path="res://scripts/cargo_system.gd" id="11_cargo"]
 [ext_resource type="Script" uid="uid://oenv7eydrp8a" path="res://scripts/tree_mover.gd" id="12_treemover"]
+[ext_resource type="Script" uid="uid://bgxtjh35ltvem" path="res://scripts/settlement.gd" id="13_settlement"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
+sky_top_color = Color(0.2, 0.4, 0.8, 1)
+sky_horizon_color = Color(0.7, 0.8, 0.9, 1)
+ground_bottom_color = Color(0.06, 0.08, 0.06, 1)
+ground_horizon_color = Color(0.6, 0.65, 0.62, 1)
+sun_angle_max = 16.0
+sun_curve = 0.12
 
 [sub_resource type="Sky" id="Sky_st1pv"]
+sky_material = SubResource("ProceduralSkyMaterial_main")
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 2
 sky = SubResource("Sky_st1pv")
 ambient_light_source = 3
 ambient_light_sky_contribution = 0.5
-ambient_light_energy = 0.42
 reflected_light_source = 2
 tonemap_mode = 4
 tonemap_exposure = 0.98
@@ -62,7 +71,6 @@ script = ExtResource("3_terrain")
 
 [node name="Road" type="Node3D" parent="." unique_id=700693744]
 script = ExtResource("4_road")
-segment_length = 2.0
 
 [node name="Fences" type="Node3D" parent="." unique_id=889106478]
 script = ExtResource("5_fences")
@@ -70,15 +78,18 @@ script = ExtResource("5_fences")
 [node name="Vegetation" type="Node3D" parent="." unique_id=115586624]
 script = ExtResource("6_vegetation")
 
+[node name="Settlement" type="Node3D" parent="." unique_id=620302169]
+script = ExtResource("13_settlement")
+
 [node name="Farmstead" type="Node3D" parent="." unique_id=620302168]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.32871184, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -253, -6.6876307, -264)
 script = ExtResource("7_farmstead")
 
 [node name="Player" parent="." unique_id=165194573 instance=ExtResource("8_player")]
-transform = Transform3D(0.99280864, 0, -0.119712204, 0, 1, 0, 0.119712204, 0, 0.99280864, 1.2, 0.2, 124.5)
+transform = Transform3D(0.8915683, 0, 0.45288628, 0, 1, 0, -0.45288628, 0, 0.8915683, -213.5, -4.532171, -126)
 
 [node name="BaseVehicle" parent="." unique_id=1056092871 instance=ExtResource("9_vehicle")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.3, -0.45, 120.5)
+transform = Transform3D(0.8915683, 0, 0.45288628, 0, 1, 0, -0.45288628, 0, 0.8915683, -207, -3.6108263, -116.5)
 center_of_mass = Vector3(0, 0.62, 0)
 
 [node name="DayNightCycle" type="Node3D" parent="." unique_id=1938774590 node_paths=PackedStringArray("world_env", "player_or_camera")]

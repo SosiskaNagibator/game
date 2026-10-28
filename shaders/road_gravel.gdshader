@@ -9,10 +9,14 @@ uniform vec3 gravel_light : source_color = vec3(0.56, 0.50, 0.40);
 uniform vec3 gravel_dark : source_color = vec3(0.38, 0.33, 0.26);
 uniform vec3 track_color : source_color = vec3(0.50, 0.44, 0.34);
 uniform vec3 edge_color : source_color = vec3(0.41, 0.36, 0.27);
+uniform vec3 grass_color : source_color = vec3(0.18, 0.28, 0.10);
 uniform float track_offset : hint_range(0.15, 0.45) = 0.31;
 uniform float pebble_amount : hint_range(0.0, 1.0) = 0.35;
 uniform float track_strength : hint_range(0.0, 1.0) = 1.0;
 uniform float edge_strength : hint_range(0.0, 1.0) = 1.0;
+// Насколько дорога заросла травой: 0 — укатанный гравий, 1 — старая колея,
+// где трава растёт между колеями и по краям.
+uniform float grass_amount : hint_range(0.0, 1.0) = 0.0;
 
 varying vec3 world_pos;
 varying vec2 road_uv;
@@ -122,6 +126,16 @@ void fragment() {
 	
 	// В колее гравий утрамбован, цвет ровнее и темнее.
 	col = mix(col, track_color, tracks * 0.46 * track_strength);
+
+	// Заросшая колея: трава между колеями, по краям и на обочинах.
+	if (grass_amount > 0.001) {
+		float tuft = smoothstep(0.30, 0.82, fbm(p * 1.35 + vec2(6.2, -4.7)));
+		float overgrow = grass_amount * (1.0 - tracks * 0.88) * (0.5 + 0.5 * tuft);
+		overgrow += grass_amount * shoulder * 0.45;
+		overgrow *= 0.7 + 0.3 * smoothstep(0.2, 0.8, fine);
+		vec3 moss = grass_color * (0.72 + 0.45 * fine) * (0.9 + 0.2 * macro);
+		col = mix(col, moss, clamp(overgrow, 0.0, 1.0));
+	}
 
 	// Крупные пятна утоптанной земли и пыли (ЗАМЕНА noise2 на fbm/value_noise)
 	float worn = fbm(world_pos.xz * 0.17 + vec2(3.1, 7.7));
