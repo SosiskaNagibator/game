@@ -58,7 +58,6 @@ environment = SubResource("Environment_main")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=1152824643]
 transform = Transform3D(0.57357645, 0.52654064, -0.6275068, 0, 0.76604426, 0.6427875, 0.81915206, -0.36868772, 0.439385, -319.50125, 177.43387, 265.0973)
-visible = false
 light_color = Color(1, 0.94, 0.82, 1)
 light_energy = 1.18
 shadow_enabled = true
@@ -86,17 +85,17 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -253, -6.6876307, -264)
 script = ExtResource("7_farmstead")
 
 [node name="Player" parent="." unique_id=165194573 instance=ExtResource("8_player")]
-transform = Transform3D(0.8915683, 0, 0.45288628, 0, 1, 0, -0.45288628, 0, 0.8915683, -213.5, -4.532171, -126)
+transform = Transform3D(0.8915683, 0, 0.45288628, 0, 1, 0, -0.45288628, 0, 0.8915683, -216.63432, -6.537631, -151.40135)
 
 [node name="BaseVehicle" parent="." unique_id=1056092871 instance=ExtResource("9_vehicle")]
-transform = Transform3D(0.8915683, 0, 0.45288628, 0, 1, 0, -0.45288628, 0, 0.8915683, -207, -3.6108263, -116.5)
+transform = Transform3D(-0.96174127, 0, -0.2739593, 0, 1, 0, 0.2739593, 0, -0.96174127, -212.22952, -6.237631, -152.09349)
 center_of_mass = Vector3(0, 0.62, 0)
 
 [node name="DayNightCycle" type="Node3D" parent="." unique_id=1938774590 node_paths=PackedStringArray("world_env", "player_or_camera")]
 script = ExtResource("10_st1pv")
 world_env = NodePath("../WorldEnvironment")
 player_or_camera = NodePath("../Player")
-time_scale = 30.0
+time_scale = 1.0
 start_time = 8.0
 
 [node name="CargoSystem" type="Node3D" parent="." unique_id=2094774591]

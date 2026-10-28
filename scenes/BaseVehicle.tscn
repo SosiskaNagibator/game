@@ -386,7 +386,7 @@ far = 20000.0
 script = ExtResource("4_third_camera")
 
 [node name="FrontLeftWheel" type="VehicleWheel3D" parent="." unique_id=15621035]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.86, 0.7, -1.72)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.86, 0.65, -1.72)
 use_as_steering = true
 wheel_radius = 0.45
 wheel_rest_length = 0.25
@@ -398,12 +398,11 @@ damping_compression = 2.0
 damping_relaxation = 2.5
 
 [node name="Wheel_FL" type="MeshInstance3D" parent="FrontLeftWheel" unique_id=650367172]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25217766, 0)
 layers = 2
 mesh = SubResource("ArrayMesh_o2sd4")
 
 [node name="FrontRightWheel" type="VehicleWheel3D" parent="." unique_id=392322282]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.86, 0.7, -1.72)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.86, 0.65, -1.72)
 use_as_steering = true
 wheel_radius = 0.45
 wheel_rest_length = 0.25
@@ -415,12 +414,11 @@ damping_compression = 2.0
 damping_relaxation = 2.5
 
 [node name="Wheel_FR" type="MeshInstance3D" parent="FrontRightWheel" unique_id=1892178757]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.241512, 0)
 layers = 2
 mesh = SubResource("ArrayMesh_nfs7c")
 
 [node name="RearLeftWheel" type="VehicleWheel3D" parent="." unique_id=747519810]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.86, 0.7, 1.68)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.86, 0.65, 1.68)
 use_as_traction = true
 wheel_radius = 0.45
 wheel_rest_length = 0.25
@@ -432,12 +430,11 @@ damping_compression = 2.4
 damping_relaxation = 3.0
 
 [node name="Wheel_RL" type="MeshInstance3D" parent="RearLeftWheel" unique_id=1687016660]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25258303, 0)
 layers = 2
 mesh = SubResource("ArrayMesh_tii02")
 
 [node name="RearRightWheel" type="VehicleWheel3D" parent="." unique_id=1133652648]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.86, 0.7, 1.68)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.86, 0.65, 1.68)
 use_as_traction = true
 wheel_radius = 0.45
 wheel_rest_length = 0.25
@@ -449,6 +446,5 @@ damping_compression = 2.4
 damping_relaxation = 3.0
 
 [node name="Wheel_RR" type="MeshInstance3D" parent="RearRightWheel" unique_id=865302217]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.24318093, 0)
 layers = 2
 mesh = SubResource("ArrayMesh_33hmo")

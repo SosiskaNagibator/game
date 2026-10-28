@@ -12,6 +12,12 @@ extends VehicleBody3D
 ##   steer_left  — руль влево (A / стрелка влево)
 ##   steer_right — руль вправо (D / стрелка вправо)
 ##   handbrake   — ручник (Space)
+##   radio_toggle — радио вкл/выкл (R)
+
+## Единственная радиостанция в машине.
+const RADIO_TRACK: AudioStream = preload(
+	"res://assets/audio/radio/radio_music_1.ogg"
+)
 
 @export_group("Двигатель")
 ## Максимальная суммарная сила тяги на ведущих колёсах, Н.
@@ -26,18 +32,19 @@ extends VehicleBody3D
 ## Скорость сглаживания руля (чем больше — тем резче реакция).
 @export_range(0.5, 20.0, 0.5) var steer_smoothing: float = 5.0
 ## Доля максимального угла руля на высокой скорости (защита от переворота).
-@export_range(0.1, 1.0, 0.05) var high_speed_steer_factor: float = 0.30
+@export_range(0.1, 1.0, 0.05) var high_speed_steer_factor: float = 0.55
 ## Скорость (км/ч), при которой достигается high_speed_steer_factor.
-@export_range(30.0, 200.0, 5.0) var high_speed_steer_kmh: float = 80.0
+@export_range(30.0, 200.0, 5.0) var high_speed_steer_kmh: float = 120.0
 ## Предельное боковое ускорение, м/с². Ограничивает угол руля на скорости,
 ## чтобы машина не переворачивалась от резкого поворота. 0 — отключить.
-@export_range(0.0, 20.0, 0.5) var max_lateral_accel: float = 9.0
+## 12 м/с² оставляет запас до порога опрокидывания пикапа (~13.6 м/с²).
+@export_range(0.0, 20.0, 0.5) var max_lateral_accel: float = 12.0
 
 @export_group("Устойчивость")
 ## Сила стабилизации крена кузова, Н·м на радиан.
-@export_range(0.0, 40000.0, 100.0) var anti_roll_strength: float = 24000.0
+@export_range(0.0, 40000.0, 100.0) var anti_roll_strength: float = 34000.0
 ## Демпфирование крена, Н·м на рад/с.
-@export_range(0.0, 30000.0, 100.0) var anti_roll_damping: float = 9000.0
+@export_range(0.0, 30000.0, 100.0) var anti_roll_damping: float = 12000.0
 ## Максимальный стабилизирующий момент, Н·м.
 @export_range(0.0, 12000.0, 100.0) var max_anti_roll_torque: float = 8000.0
 ## Скорость (км/ч), с которой начинает работать стабилизация крена.
@@ -45,7 +52,7 @@ extends VehicleBody3D
 ## Скорость (км/ч), на которой стабилизация выходит на полную силу.
 @export_range(30.0, 180.0, 5.0) var stability_full_kmh: float = 95.0
 ## Прижимная сила: Н на (м/с)². Помогает держать колёса на дороге.
-@export_range(0.0, 8.0, 0.1) var downforce_coefficient: float = 1.2
+@export_range(0.0, 8.0, 0.1) var downforce_coefficient: float = 1.6
 
 @export_group("Тормоза")
 ## Сила торможения рабочей тормозной системы на каждое колесо, Н.
@@ -82,6 +89,12 @@ extends VehicleBody3D
 ## Яркость фар.
 @export_range(0.5, 12.0, 0.1) var headlight_energy: float = 3.2
 
+@export_group("Радио")
+## Громкость радио, дБ.
+@export_range(-40.0, 6.0, 0.5) var radio_volume_db: float = -8.0
+## Расстояние, на котором радио ещё слышно, м.
+@export_range(1.0, 100.0, 1.0) var radio_max_distance: float = 45.0
+
 # Все колёса машины (заполняется в _ready).
 var _all_wheels: Array[VehicleWheel3D] = []
 # Колёса, у которых в Инспекторе включён "Use as Steering".
@@ -102,6 +115,11 @@ var _headlights: Array[SpotLight3D] = []
 # Базовое сцепление каждого колеса, чтобы возвращать его после ручника.
 var _base_friction: Dictionary = {}
 var _headlights_on: bool = false
+# Масса пустой машины: по ней считается предельная сила тормозов.
+var _empty_mass: float = 0.0
+# Автомагнитола (создаётся в _ready).
+var _radio: AudioStreamPlayer3D = null
+var _radio_on: bool = false
 
 ## Игрок, который сейчас управляет машиной. null — машина пустая.
 var driver: Node = null
@@ -116,6 +134,11 @@ var _wheel_effects: Array[Dictionary] = []
 
 
 func _ready() -> void:
+	# Низкий центр масс сильно снижает склонность кузова к опрокидыванию.
+	center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
+	center_of_mass = Vector3(0.0, -0.5, 0.0)
+	# Запоминаем снаряжённую массу: груз будет добавляться к ней.
+	_empty_mass = mass
 	# Машина не должна "засыпать" на стоянке, иначе первый газ может не сработать.
 	can_sleep = false
 	add_to_group("vehicles")
@@ -126,6 +149,7 @@ func _ready() -> void:
 	_third_person_camera = get_node_or_null("ThirdPersonCamera") as Camera3D
 	_setup_wheel_effects()
 	_setup_headlights()
+	_setup_radio()
 
 
 ## Скрываем колёса, встроенные в модель кузова: ими управляют VehicleWheel3D.
@@ -140,14 +164,16 @@ func _hide_body_wheels() -> void:
 			wheel.visible = false
 
 
-## V — переключение вида от первого лица на камеру сзади и обратно.
+## V — переключение вида, R — радио.
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_occupied():
 		return
-	if not InputMap.has_action("camera_toggle"):
-		return
-	if event.is_action_pressed("camera_toggle"):
+	if InputMap.has_action("camera_toggle") and event.is_action_pressed("camera_toggle"):
 		_set_third_person_view(not _third_person_active)
+		get_viewport().set_input_as_handled()
+		return
+	if InputMap.has_action("radio_toggle") and event.is_action_pressed("radio_toggle"):
+		toggle_radio()
 		get_viewport().set_input_as_handled()
 
 
@@ -459,6 +485,36 @@ func _update_headlights() -> void:
 		light.visible = on
 
 
+# --- Радио ----------------------------------------------------------------
+
+
+## Автомагнитола: пространственный источник звука в салоне.
+func _setup_radio() -> void:
+	_radio = AudioStreamPlayer3D.new()
+	_radio.name = "Radio"
+	_radio.stream = RADIO_TRACK
+	_radio.position = Vector3(0.0, 1.1, 0.2)
+	_radio.volume_db = radio_volume_db
+	_radio.unit_size = 8.0
+	_radio.max_distance = radio_max_distance
+	_radio.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
+	add_child(_radio)
+
+
+## Включить или выключить радио (клавиша R).
+func toggle_radio() -> void:
+	if _radio == null:
+		return
+	_radio_on = not _radio_on
+	if _radio_on:
+		_radio.play()
+	else:
+		_radio.stop()
+
+
+func is_radio_on() -> bool:
+	return _radio_on
+
 
 ## Плавный поворот руля (lerp) + возврат в центр + ограничение на скорости.
 func _update_steering(delta: float, forward_speed: float) -> void:
@@ -633,9 +689,12 @@ func _update_engine_and_brakes(forward_speed: float) -> void:
 		deceleration = maxf(deceleration, handbrake_deceleration)
 
 	# Центральная сила торможения направлена против движения.
+	# Считаем её по массе пустой машины: с грузом тормозной путь растёт,
+	# а не остаётся одинаковым за счёт искусственного масштабирования.
 	if deceleration > 0.0 and absf(forward_speed) > 0.15:
 		var direction: float = signf(forward_speed)
-		apply_central_force(global_transform.basis.z * deceleration * mass * direction)
+		var brake_mass: float = _empty_mass if _empty_mass > 0.0 else mass
+		apply_central_force(global_transform.basis.z * deceleration * brake_mass * direction)
 
 	# Сила тяги делится между ведущими колёсами, чтобы max_engine_force
 	# оставалась суммарной силой, а не силой на каждое колесо.
