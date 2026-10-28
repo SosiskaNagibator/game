@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b0xyajpv72cky" path="res://scripts/main_menu.gd" id="1_main_menu"]
 [ext_resource type="PackedScene" uid="uid://dvnye2e52t82k" path="res://assets/models/old_pickup/old_pickup.glb" id="2_pickup"]
+[ext_resource type="AudioStream" uid="uid://c36q7uekmohom" path="res://assets/audio/music/menu_music.ogg" id="3_menu_music"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_night"]
 sky_top_color = Color(0.005, 0.008, 0.018, 1)
@@ -156,6 +157,11 @@ script = ExtResource("1_main_menu")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1896201774]
 environment = SubResource("Environment_night")
+
+[node name="MenuMusic" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_menu_music")
+volume_db = -8.0
+autoplay = true
 
 [node name="MoonFill" type="DirectionalLight3D" parent="." unique_id=1152824643]
 transform = Transform3D(0.88294756, 0.31413782, -0.34888536, 0, 0.7431448, 0.6691306, 0.46947157, -0.59080726, 0.6561579, 0, 0, 0)

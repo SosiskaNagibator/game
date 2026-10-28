@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://jx3b1l0djra0"]
+
+[ext_resource type="PackedScene" uid="uid://c5bn1rd0s2pf0" path="res://scenes/BaseVehicle.tscn" id="1_vehicle"]
+[ext_resource type="PackedScene" uid="uid://b0sl21y1mmmo8" path="res://assets/models/wooden_box/low_poly_wooden_box.glb" id="2_crate"]
+
+[node name="CargoPreview" type="Node3D" unique_id=1639642261]
+
+[node name="Vehicle" parent="." unique_id=650061136 instance=ExtResource("1_vehicle")]
+
+[node name="Crate0" parent="." unique_id=1937877199 instance=ExtResource("2_crate")]
+transform = Transform3D(0.28, 0, 0, 0, 0.28, 0, 0, 0, 0.28, -0.33, 0.890744, 1.02)
+
+[node name="Crate1" parent="." unique_id=1388403199 instance=ExtResource("2_crate")]
+transform = Transform3D(0.28, 0, 0, 0, 0.28, 0, 0, 0, 0.28, 0.33, 0.890744, 1.02)
+
+[node name="Crate2" parent="." unique_id=633794660 instance=ExtResource("2_crate")]
+transform = Transform3D(0.28, 0, 0, 0, 0.28, 0, 0, 0, 0.28, -0.33, 0.890744, 1.66)
+
+[node name="Crate3" parent="." unique_id=1820920109 instance=ExtResource("2_crate")]
+transform = Transform3D(0.28, 0, 0, 0, 0.28, 0, 0, 0, 0.28, 0.33, 0.890744, 1.66)
+
+[node name="Crate4" parent="." unique_id=289028284 instance=ExtResource("2_crate")]
+transform = Transform3D(0.28, 0, 0, 0, 0.28, 0, 0, 0, 0.28, -0.33, 0.890744, 2.3)
+
+[node name="Crate5" parent="." unique_id=1313684001 instance=ExtResource("2_crate")]
+transform = Transform3D(0.28, 0, 0, 0, 0.28, 0, 0, 0, 0.28, 0.33, 0.890744, 2.3)
