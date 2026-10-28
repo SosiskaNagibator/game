@@ -22,7 +22,7 @@ const LAYOUT_PATH := "user://tree_layout_v3.cfg"
 const TREE_CELL := 6.4
 const TREE_MARGIN := 2.8
 ## Подлесок сажается ещё гуще деревьев — именно он делает лес непросвечиваемым.
-const BUSH_CELL := 5.2
+const BUSH_CELL := 4.8
 ## Общий масштаб лесных деревьев. 1.0 — прежние 9–15 м; сейчас лес
 ## пониже, чтобы кроны не нависали над домами и машинами.
 const TREE_SCALE := 0.62
@@ -31,8 +31,10 @@ const TREE_SCALE := 0.62
 const TREES_ENABLED := false
 ## Кусты (подлесок). false — кустов на карте нет.
 const BUSHES_ENABLED := false
-## Камни и их коллизии. false — камней на карте нет.
-const ROCKS_ENABLED := false
+## Камни и их коллизии.
+const ROCKS_ENABLED := true
+const GRASS_ENABLED := true
+const DETAILS_ENABLED := true
 ## Радиус вокруг базы и деревни, где каждое дерево — отдельный объект,
 ## который можно выбрать и двигать. Дальше лес остаётся MultiMesh.
 const NEAR_TREE_RADIUS := 150.0
@@ -100,7 +102,8 @@ func _ready() -> void:
 		_register_near_nodes()
 	if BUSHES_ENABLED:
 		_scatter_bushes()
-	_scatter_grass()
+	if GRASS_ENABLED:
+		_scatter_grass()
 	_scatter_details()
 	_build_visuals()
 	_build_collisions()
@@ -534,7 +537,7 @@ func _scatter_bushes() -> void:
 			x += _rng.randf_range(-BUSH_CELL * 0.45, BUSH_CELL * 0.45)
 			z += _rng.randf_range(-BUSH_CELL * 0.45, BUSH_CELL * 0.45)
 			var density: float = RuralHeight.forest_density(x, z)
-			if density < 0.15 or _rng.randf() > density * 0.95:
+			if density < 0.12 or _rng.randf() > clampf(density * 1.08, 0.0, 1.0):
 				continue
 			_add_bush(x, z)
 
@@ -585,7 +588,7 @@ func _scatter_grass() -> void:
 	var base: Vector2 = RuralHeight.BASE_CENTER
 
 	# 1. Обочины дорог и заросшие колеи.
-	for i in 13000:
+	for i in 800:
 		if roads.is_empty():
 			break
 		var road: Dictionary = roads[_rng.randi_range(0, roads.size() - 1)]
@@ -613,7 +616,7 @@ func _scatter_grass() -> void:
 		_append_grass(x, z)
 
 	# 2. Деревенский луг.
-	for i in 7500:
+	for i in 600:
 		var x: float = RuralHeight.SETTLEMENT_CENTER.x + _rng.randf_range(-52.0, 52.0)
 		var z: float = RuralHeight.SETTLEMENT_CENTER.y + _rng.randf_range(-40.0, 40.0)
 		if RuralHeight.road_distance(x, z) < RuralHeight.road_half_width(x, z) + 0.6:
@@ -621,14 +624,14 @@ func _scatter_grass() -> void:
 		_append_grass(x, z)
 
 	# 3. Поляны.
-	for i in 6500:
+	for i in 500:
 		var glade: Vector3 = RuralHeight.GLADES[_rng.randi_range(0, RuralHeight.GLADES.size() - 1)]
 		var angle: float = _rng.randf_range(0.0, TAU)
 		var radius: float = sqrt(_rng.randf()) * glade.z * 0.95
 		_append_grass(glade.x + cos(angle) * radius, glade.y + sin(angle) * radius)
 
 	# 4. Кольцо вокруг базы: высокая трава у кромки леса.
-	for i in 3200:
+	for i in 300:
 		var angle: float = _rng.randf_range(0.0, TAU)
 		var radius: float = _rng.randf_range(21.0, 40.0)
 		var x: float = base.x + cos(angle) * radius
@@ -640,14 +643,14 @@ func _scatter_grass() -> void:
 		_append_grass(x, z)
 
 	# 5. Редкая трава на лесной подстилке.
-	for i in 9000:
+	for i in 1000:
 		var x: float = _rng.randf_range(-392.0, 392.0)
 		var z: float = _rng.randf_range(-392.0, 392.0)
 		if RuralHeight.forest_density(x, z) < 0.30:
 			continue
 		if RuralHeight.road_distance(x, z) < RuralHeight.road_half_width(x, z) + 0.5:
 			continue
-		if _rng.randf() > 0.55:
+		if _rng.randf() > 0.62:
 			continue
 		_append_grass(x, z)
 
@@ -672,7 +675,7 @@ func _scatter_rocks() -> void:
 	# Заметные камни в чаще.
 	var placed: int = 0
 	for _attempt in 40000:
-		if placed >= 950:
+		if placed >= 180:
 			break
 		var x: float = _rng.randf_range(-390.0, 390.0)
 		var z: float = _rng.randf_range(-390.0, 390.0)
@@ -704,13 +707,13 @@ func _scatter_details() -> void:
 	_scatter_rocks()
 
 	# Без леса не нужны ни поваленные стволы, ни пни.
-	if not TREES_ENABLED:
+	if not DETAILS_ENABLED:
 		return
 
 	# Поваленные стволы.
 	var placed: int = 0
 	for _attempt in 16000:
-		if placed >= 240:
+		if placed >= 60:
 			break
 		var x: float = _rng.randf_range(-385.0, 385.0)
 		var z: float = _rng.randf_range(-385.0, 385.0)
@@ -730,7 +733,7 @@ func _scatter_details() -> void:
 	# Пни — следы старых вырубок.
 	placed = 0
 	for _attempt in 20000:
-		if placed >= 420:
+		if placed >= 120:
 			break
 		var x: float = _rng.randf_range(-388.0, 388.0)
 		var z: float = _rng.randf_range(-388.0, 388.0)
@@ -844,7 +847,8 @@ func _build_visuals() -> void:
 		_add_multimesh(log_mesh, _logs, log_material, "FallenLogs", true, false, false)
 		_add_multimesh(stump_mesh, _stumps, stump_material, "Stumps", true, false, false)
 
-	_build_grass()
+	if GRASS_ENABLED:
+		_build_grass()
 
 
 func _build_grass() -> void:

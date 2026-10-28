@@ -1,0 +1,17 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+D3D12 12_0 - Forward+ - Using Device #0: AMD - AMD Radeon RX 580 2048SP
+
+MCP | using uvx (godot-ai==4.3.1)
+MCP | plugin loaded
+MCP | Probing the configured server endpoint.
+POPULATE _ready called, editor=true populate=true
+total placements: 953
+saved rural_base.tscn with 953 decor instances
+initial scene load
+Version correct, launching normally.
+MCP | started server (PID 23856)
+MCP | connecting to server (attempt 1)
+MCP | connected to server; authenticating
+MCP | authenticated with server
+MCP | [event] scene_changed -> res://tools/_populate_decor_scene.tscn
+MCP | [event] scene_changed -> res://scenes/rural_base.tscn

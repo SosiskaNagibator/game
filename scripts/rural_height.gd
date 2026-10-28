@@ -9,7 +9,7 @@ extends RefCounted
 const WORLD_HALF := 400.0
 ## Версия мира: при изменении формулы высоты/сети дорог увеличиваем — поле
 ## пересобирается, не дожидаясь перезапуска редактора.
-const WORLD_EPOCH := 3
+const WORLD_EPOCH := 4
 
 # --- Скрытая база в чаще ----------------------------------------------------
 const BASE_CENTER := Vector2(-228.0, -166.0)
@@ -133,7 +133,11 @@ static func terrain_height(x: float, z: float) -> float:
 
 	var road: Vector3 = ForestRoads.sample3(x, z)
 	if road.x < 10.0:
-		var blend: float = 1.0 - smoothstep(road.z + 0.55, road.z + 4.4, road.x)
+		var blend: float = 1.0 - smoothstep(
+			road.z + ForestRoads.ROAD_BLEND_INNER,
+			road.z + ForestRoads.ROAD_BLEND_OUTER,
+			road.x
+		)
 		h = lerpf(h, road.y, blend)
 
 	var yard: float = yard_mask(x, z)

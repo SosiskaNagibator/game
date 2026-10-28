@@ -6,8 +6,8 @@ extends Node3D
 
 const ROAD_SHADER := preload("res://shaders/road_gravel.gdshader")
 
-@export var surface_offset: float = 0.055
-@export var crown_height: float = 0.045
+@export var surface_offset: float = 0.05
+@export var crown_height: float = 0.018
 
 ## Поперечные полосы: сгущаем вершины к краям, чтобы кромка читалась.
 const OFFSETS := [-1.0, -0.88, -0.66, -0.4, -0.14, 0.0, 0.14, 0.4, 0.66, 0.88, 1.0]
@@ -53,11 +53,16 @@ func _build_road(root: Node3D, road: Dictionary, index: int) -> void:
 
 		var base_y: float = RuralHeight.terrain_height(p.x, p.z)
 		for offset in OFFSETS:
+			var lateral_offset: float = offset * half_width
+			var side_x: float = p.x + lateral.x * lateral_offset
+			var side_z: float = p.z + lateral.z * lateral_offset
 			var crown: float = (1.0 - absf(offset)) * crown_height
-			var pos: Vector3 = (
-				Vector3(p.x, base_y + surface_offset + crown, p.z)
-				+ lateral * (offset * half_width)
-			)
+			var surface_y: float = base_y + surface_offset + crown
+			# Край полотна постепенно принимает высоту обочины. В центре
+			# остаётся ровная колея, а последний метр дороги не обрывается.
+			var edge_blend: float = smoothstep(0.58, 1.0, absf(offset)) * 0.78
+			var shoulder_y: float = RuralHeight.terrain_height(side_x, side_z) + surface_offset * 0.4
+			var pos := Vector3(side_x, lerpf(surface_y, shoulder_y, edge_blend), side_z)
 			st.set_uv(Vector2((offset + 1.0) * 0.5, traveled * 0.045))
 			st.add_vertex(pos)
 
@@ -102,7 +107,7 @@ func _make_material(overgrown: float) -> ShaderMaterial:
 	material.set_shader_parameter("track_color", track)
 	material.set_shader_parameter("edge_color", edge)
 	material.set_shader_parameter("grass_color", grass)
-	material.set_shader_parameter("grass_amount", clampf(overgrown * 1.05, 0.0, 1.0))
+	material.set_shader_parameter("grass_amount", clampf(overgrown * 0.4, 0.0, 0.4))
 	material.set_shader_parameter("track_strength", 0.95)
 	material.set_shader_parameter("edge_strength", 0.8)
 	material.set_shader_parameter("pebble_amount", lerpf(0.34, 0.12, overgrown))
