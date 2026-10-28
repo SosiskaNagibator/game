@@ -7,6 +7,22 @@ const CLAPBOARD_SHADER := preload("res://shaders/clapboard.gdshader")
 const METAL_SHADER := preload("res://shaders/corrugated_metal.gdshader")
 const ROAD_SHADER := preload("res://shaders/road_gravel.gdshader")
 
+## Внутренняя система координат построек: двор строится вокруг (25, 98),
+## а весь узел сдвигается в скрытую лесную низину.
+const LOCAL_YARD := Vector2(25.0, 98.0)
+
+# --- Что строим во дворе ----------------------------------------------------
+## Силосы-башни.
+const SILOS_ENABLED := false
+## Топливный бак на подставках и колонка.
+const FUEL_TANK_ENABLED := false
+## Вывеска Hollow Creek и указатель зоны разгрузки.
+const SIGNS_ENABLED := false
+## Ящики, паллеты и бочки (на улице и внутри склада).
+const CRATES_ENABLED := false
+## Стеллажи внутри склада.
+const RACKS_ENABLED := false
+
 var _barn_mat: ShaderMaterial
 var _silo_mat: ShaderMaterial
 var _warehouse_mat: ShaderMaterial
@@ -38,15 +54,23 @@ func _ready() -> void:
 	if get_node_or_null("Warehouse") != null:
 		return
 	if snap_to_yard:
-		position.y = RuralHeight.yard_height()
+		# Ставим весь двор на площадку базы в чаще: постройки остаются
+		# в прежних локальных координатах, а скрытое место задаёт сцена.
+		position = Vector3(
+			RuralHeight.BASE_CENTER.x - LOCAL_YARD.x,
+			RuralHeight.yard_height(),
+			RuralHeight.BASE_CENTER.y - LOCAL_YARD.y
+		)
 	_create_materials()
 	_build_yard()
 	_build_warehouse()
-	_build_silos()
+	if SILOS_ENABLED:
+		_build_silos()
 	_build_loading_dock()
 	_build_scale()
 	_build_props()
-	_build_sign()
+	if SIGNS_ENABLED:
+		_build_sign()
 	_build_cargo_zones()
 	_build_collisions()
 
@@ -147,7 +171,7 @@ func _make_yard_mesh() -> ArrayMesh:
 	var rings := 7
 	var radius_x := 20.2
 	var radius_z := 19.4
-	var center := RuralHeight.YARD_CENTER
+	var center := LOCAL_YARD
 	var top_y := 0.055
 
 	var st := SurfaceTool.new()
@@ -172,8 +196,8 @@ func _make_yard_mesh() -> ArrayMesh:
 
 			var x: float = center.x + cos(ang) * r
 			var z: float = center.y + sin(ang) * r
-			var ground: float = RuralHeight.terrain_height(x, z) - RuralHeight.yard_height()
-			var y: float = lerpf(top_y, ground - 0.05, fall)
+			var ground: float = _ground_local(x, z) - 0.05
+			var y: float = lerpf(top_y, ground, fall)
 
 			st.set_uv(Vector2(x - center.x, z - center.y) / (2.0 * radius_x) + Vector2(0.5, 0.5))
 			st.add_vertex(Vector3(x, y, z))
@@ -299,29 +323,32 @@ func _build_warehouse() -> void:
 
 func _build_warehouse_interior(warehouse: Node3D) -> void:
 	# Стеллажи вдоль стен и ящики на полках.
-	for sx in [-1.0, 1.0]:
-		for z in [-5.2, -2.6, 0.0, 2.6, 5.2]:
-			_box(
-				warehouse, Vector3(0.12, 4.4, 0.12),
-				Vector3(sx * 5.35, 2.2, z), _dark_metal_mat, "RackUpright"
-			)
-		for level in [0.45, 1.8, 3.15, 4.4]:
-			_box(
-				warehouse, Vector3(1.6, 0.1, 11.0),
-				Vector3(sx * 5.35, level, 0.0), _dark_metal_mat, "RackShelf"
-			)
-			for z in [-4.4, 0.0, 4.4]:
-				_crate(
-					warehouse, Vector3(sx * 5.35, level + 0.36, z),
-					Vector3(0.9, 0.7, 0.9)
+	if RACKS_ENABLED:
+		for sx in [-1.0, 1.0]:
+			for z in [-5.2, -2.6, 0.0, 2.6, 5.2]:
+				_box(
+					warehouse, Vector3(0.12, 4.4, 0.12),
+					Vector3(sx * 5.35, 2.2, z), _dark_metal_mat, "RackUpright"
 				)
+			for level in [0.45, 1.8, 3.15, 4.4]:
+				_box(
+					warehouse, Vector3(1.6, 0.1, 11.0),
+					Vector3(sx * 5.35, level, 0.0), _dark_metal_mat, "RackShelf"
+				)
+				if CRATES_ENABLED:
+					for z in [-4.4, 0.0, 4.4]:
+						_crate(
+							warehouse, Vector3(sx * 5.35, level + 0.36, z),
+							Vector3(0.9, 0.7, 0.9)
+						)
 
 	# Паллеты в центре склада.
-	for z in [-2.4, 2.4]:
-		_pallet(warehouse, Vector3(-2.2, 0.31, z), 0.0)
-		_crate(warehouse, Vector3(-2.2, 0.95, z), Vector3(1.2, 1.0, 1.1))
-		_pallet(warehouse, Vector3(2.2, 0.31, z), 180.0)
-		_crate(warehouse, Vector3(2.2, 0.95, z), Vector3(1.1, 0.9, 1.0))
+	if CRATES_ENABLED:
+		for z in [-2.4, 2.4]:
+			_pallet(warehouse, Vector3(-2.2, 0.31, z), 0.0)
+			_crate(warehouse, Vector3(-2.2, 0.95, z), Vector3(1.2, 1.0, 1.1))
+			_pallet(warehouse, Vector3(2.2, 0.31, z), 180.0)
+			_crate(warehouse, Vector3(2.2, 0.95, z), Vector3(1.1, 0.9, 1.0))
 
 	# Потолочные светильники.
 	for z in [-4.5, 0.0, 4.5]:
@@ -392,14 +419,15 @@ func _build_loading_dock() -> void:
 
 	# Ящики, паллеты и бочки на площадке.
 	# Ящики стоят на настиле дока (верх плиты — y = 1.15), а не утопают в нём.
-	_crate(dock, Vector3(-2.4, 1.70, -1.2), Vector3(1.5, 1.1, 1.4))
-	_crate(dock, Vector3(-0.9, 1.55, -1.6), Vector3(1.1, 0.8, 1.1))
-	_crate(dock, Vector3(-2.6, 2.70, -1.1), Vector3(1.0, 0.9, 0.9), Vector3(0.0, 12.0, 0.0))
-	_crate(dock, Vector3(2.6, 1.65, 1.4), Vector3(1.4, 1.0, 1.2))
-	_pallet(dock, Vector3(1.0, 1.20, 2.0), 0.0)
-	_pallet(dock, Vector3(3.2, 1.20, 0.6), 20.0)
-	_barrel(dock, Vector3(3.5, 1.65, -2.0), _barrel_mat)
-	_barrel(dock, Vector3(2.85, 1.65, -2.2), _barrel_mat)
+	if CRATES_ENABLED:
+		_crate(dock, Vector3(-2.4, 1.70, -1.2), Vector3(1.5, 1.1, 1.4))
+		_crate(dock, Vector3(-0.9, 1.55, -1.6), Vector3(1.1, 0.8, 1.1))
+		_crate(dock, Vector3(-2.6, 2.70, -1.1), Vector3(1.0, 0.9, 0.9), Vector3(0.0, 12.0, 0.0))
+		_crate(dock, Vector3(2.6, 1.65, 1.4), Vector3(1.4, 1.0, 1.2))
+		_pallet(dock, Vector3(1.0, 1.20, 2.0), 0.0)
+		_pallet(dock, Vector3(3.2, 1.20, 0.6), 20.0)
+		_barrel(dock, Vector3(3.5, 1.65, -2.0), _barrel_mat)
+		_barrel(dock, Vector3(2.85, 1.65, -2.2), _barrel_mat)
 
 
 func _build_scale() -> void:
@@ -434,15 +462,16 @@ func _build_props() -> void:
 	add_child(props)
 
 	# Топливный бак на подставках.
-	var tank := Node3D.new()
-	tank.name = "FuelTank"
-	tank.position = Vector3(38.0, 0.0, 112.5)
-	props.add_child(tank)
-	_cylinder(tank, 2.0, 4.4, Vector3(0.0, 2.0, 0.0), _dark_metal_mat, "Tank", Vector3(0.0, 0.0, 90.0))
-	for sx in [-1.4, 1.4]:
-		_box(tank, Vector3(0.45, 1.0, 1.5), Vector3(sx, 0.5, 0.0), _concrete_mat, "TankCradle")
-	_box(tank, Vector3(0.7, 1.35, 0.55), Vector3(-2.6, 0.68, 1.0), _barrel_mat, "FuelPump")
-	_box(tank, Vector3(0.55, 0.2, 0.55), Vector3(-2.6, 1.42, 1.0), _dark_metal_mat, "PumpHead")
+	if FUEL_TANK_ENABLED:
+		var tank := Node3D.new()
+		tank.name = "FuelTank"
+		tank.position = Vector3(38.0, 0.0, 112.5)
+		props.add_child(tank)
+		_cylinder(tank, 2.0, 4.4, Vector3(0.0, 2.0, 0.0), _dark_metal_mat, "Tank", Vector3(0.0, 0.0, 90.0))
+		for sx in [-1.4, 1.4]:
+			_box(tank, Vector3(0.45, 1.0, 1.5), Vector3(sx, 0.5, 0.0), _concrete_mat, "TankCradle")
+		_box(tank, Vector3(0.7, 1.35, 0.55), Vector3(-2.6, 0.68, 1.0), _barrel_mat, "FuelPump")
+		_box(tank, Vector3(0.55, 0.2, 0.55), Vector3(-2.6, 1.42, 1.0), _dark_metal_mat, "PumpHead")
 
 	# Рулоны сена у северного края.
 	for i in 5:
@@ -459,13 +488,14 @@ func _build_props() -> void:
 		})
 
 	# Паллеты и ящики у склада.
-	_crate(props, Vector3(23.6, 0.7, 108.4), Vector3(1.35, 1.2, 1.2))
-	_crate(props, Vector3(24.8, 0.55, 108.8), Vector3(1.0, 0.9, 1.0), Vector3(0.0, 18.0, 0.0))
-	_pallet(props, Vector3(20.6, 0.06, 109.3), 10.0)
-	_pallet(props, Vector3(20.3, 0.30, 109.2), 35.0)
-	_barrel(props, Vector3(35.7, 0.47, 90.3), _barrel_mat)
-	_barrel(props, Vector3(36.4, 0.47, 90.8), _barrel_mat)
-	_barrel(props, Vector3(35.9, 0.47, 91.4), _yellow_mat)
+	if CRATES_ENABLED:
+		_crate(props, Vector3(23.6, 0.7, 108.4), Vector3(1.35, 1.2, 1.2))
+		_crate(props, Vector3(24.8, 0.55, 108.8), Vector3(1.0, 0.9, 1.0), Vector3(0.0, 18.0, 0.0))
+		_pallet(props, Vector3(20.6, 0.06, 109.3), 10.0)
+		_pallet(props, Vector3(20.3, 0.30, 109.2), 35.0)
+		_barrel(props, Vector3(35.7, 0.47, 90.3), _barrel_mat)
+		_barrel(props, Vector3(36.4, 0.47, 90.8), _barrel_mat)
+		_barrel(props, Vector3(35.9, 0.47, 91.4), _yellow_mat)
 
 	# Фонарь у дока.
 	_cylinder(props, 0.12, 4.8, Vector3(19.0, 2.4, 94.2), _dark_metal_mat, "LampPost")
@@ -484,15 +514,12 @@ func _build_props() -> void:
 	dock_light.shadow_enabled = false
 	props.add_child(dock_light)
 
-	# Почтовый ящик у дороги.
+	# Почтовый ящик у въезда на базу (дорога подходит с северо-востока).
 	var mailbox := Node3D.new()
 	mailbox.name = "Mailbox"
-	var mb_x: float = RuralHeight.road_x(120.0) + 5.1
-	mailbox.position = Vector3(
-		mb_x,
-		RuralHeight.terrain_height(mb_x, 120.0) - RuralHeight.yard_height(),
-		120.0
-	)
+	var mb_x: float = 36.0
+	var mb_z: float = 120.0
+	mailbox.position = Vector3(mb_x, _ground_local(mb_x, mb_z), mb_z)
 	mailbox.rotation_degrees.y = -12.0
 	props.add_child(mailbox)
 	_box(mailbox, Vector3(0.11, 1.25, 0.11), Vector3(0.0, 0.62, 0.0), _wood_mat, "Post")
@@ -501,16 +528,14 @@ func _build_props() -> void:
 
 
 func _build_sign() -> void:
+	if not SIGNS_ENABLED:
+		return
 	var sign := Node3D.new()
 	sign.name = "EntranceSign"
-	var sx: float = 7.0
-	var sz: float = 113.8
-	sign.position = Vector3(
-		sx,
-		RuralHeight.terrain_height(sx, sz) - RuralHeight.yard_height(),
-		sz
-	)
-	sign.rotation_degrees.y = -24.0
+	var sx: float = 22.0
+	var sz: float = 122.5
+	sign.position = Vector3(sx, _ground_local(sx, sz), sz)
+	sign.rotation_degrees.y = -18.0
 	add_child(sign)
 
 	for sx_post in [-1.6, 1.6]:
@@ -547,16 +572,17 @@ func _build_cargo_zones() -> void:
 			_box(zones, Vector3(0.14, 0.03, 1.0), corner, _yellow_mat, "UnloadCorner")
 
 	# Указатель зоны разгрузки слева от ворот.
-	var sign := Node3D.new()
-	sign.name = "UnloadSign"
-	sign.position = Vector3(22.4, 0.0, 113.9)
-	sign.rotation_degrees.y = 10.0
-	zones.add_child(sign)
-	for sx in [-1.25, 1.25]:
-		_box(sign, Vector3(0.14, 2.4, 0.14), Vector3(sx, 1.2, 0.0), _dark_metal_mat, "SignPost")
-	_box(sign, Vector3(3.1, 1.05, 0.12), Vector3(0.0, 2.35, 0.05), _yellow_mat, "SignBoard")
-	_label(sign, "UNLOADING", Vector3(0.0, 2.5, 0.13), 0.0065, Color(0.12, 0.13, 0.08), 640, 46)
-	_label(sign, "ONLY", Vector3(0.0, 2.04, 0.13), 0.0045, Color(0.14, 0.15, 0.10), 640, 30)
+	if SIGNS_ENABLED:
+		var sign := Node3D.new()
+		sign.name = "UnloadSign"
+		sign.position = Vector3(22.4, 0.0, 113.9)
+		sign.rotation_degrees.y = 10.0
+		zones.add_child(sign)
+		for sx in [-1.25, 1.25]:
+			_box(sign, Vector3(0.14, 2.4, 0.14), Vector3(sx, 1.2, 0.0), _dark_metal_mat, "SignPost")
+		_box(sign, Vector3(3.1, 1.05, 0.12), Vector3(0.0, 2.35, 0.05), _yellow_mat, "SignBoard")
+		_label(sign, "UNLOADING", Vector3(0.0, 2.5, 0.13), 0.0065, Color(0.12, 0.13, 0.08), 640, 46)
+		_label(sign, "ONLY", Vector3(0.0, 2.04, 0.13), 0.0045, Color(0.14, 0.15, 0.10), 640, 30)
 
 
 func _build_collisions() -> void:
@@ -574,15 +600,17 @@ func _build_collisions() -> void:
 	_static_box(body, Vector3(2.05, 7.0, 0.35), Vector3(34.725, 3.5, 107.5))
 	_static_box(body, Vector3(13.5, 1.6, 0.35), Vector3(29.0, 6.2, 107.5))
 	_static_box(body, Vector3(13.5, 0.4, 15.0), Vector3(29.0, 7.0, 100.0))
-	for rack_x in [-5.35, 5.35]:
-		_static_box(body, Vector3(1.6, 4.4, 11.0), Vector3(29.0 + rack_x, 2.2, 100.0))
+	if RACKS_ENABLED:
+		for rack_x in [-5.35, 5.35]:
+			_static_box(body, Vector3(1.6, 4.4, 11.0), Vector3(29.0 + rack_x, 2.2, 100.0))
 	for door in [-2.6, 2.6]:
 		_static_box(
 			body, Vector3(4.4, 0.14, 3.0),
 			Vector3(29.0 + door, 0.11, 109.5), Vector3(4.7, 0.0, 0.0)
 		)
-	_static_cylinder(body, 2.62, 9.4, Vector3(38.6, 5.0, 96.0))
-	_static_cylinder(body, 2.62, 9.4, Vector3(38.6, 5.0, 105.2))
+	if SILOS_ENABLED:
+		_static_cylinder(body, 2.62, 9.4, Vector3(38.6, 5.0, 96.0))
+		_static_cylinder(body, 2.62, 9.4, Vector3(38.6, 5.0, 105.2))
 
 	_static_box(body, Vector3(9.0, 1.15, 7.0), Vector3(14.0, 0.58, 89.0))
 	_static_box(body, Vector3(4.2, 0.24, 4.5), Vector3(14.0, 0.63, 94.55), Vector3(15.3, 0.0, 0.0))
@@ -593,8 +621,9 @@ func _build_collisions() -> void:
 	_static_box(body, Vector3(8.0, 0.32, 13.0), Vector3(14.0, 0.16, 103.5))
 	_static_box(body, Vector3(1.9, 2.7, 2.0), Vector3(19.3, 1.35, 103.5))
 
-	_static_box(body, Vector3(2.1, 2.2, 4.5), Vector3(38.0, 1.5, 112.5))
-	_static_box(body, Vector3(0.75, 1.45, 0.6), Vector3(35.4, 0.73, 114.0))
+	if FUEL_TANK_ENABLED:
+		_static_box(body, Vector3(2.1, 2.2, 4.5), Vector3(38.0, 1.5, 112.5))
+		_static_box(body, Vector3(0.75, 1.45, 0.6), Vector3(35.4, 0.73, 114.0))
 
 	# Сено: лежачие цилиндры, поэтому коллизия поворачивается вместе с рулоном.
 	for bale in _hay_colliders:
@@ -643,6 +672,11 @@ func _static_cylinder_rot(
 
 
 # --- Помощники --------------------------------------------------------------
+
+
+## Высота земли в локальных координатах двора (0 — уровень площадки).
+func _ground_local(x: float, z: float) -> float:
+	return RuralHeight.terrain_height(x + position.x, z + position.z) - position.y
 
 
 func _box(

@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://c2el0ydu2qdgf" path="res://scripts/vehicle_base.gd" id="1_vehicle"]
 [ext_resource type="Script" uid="uid://dceobx876hk7o" path="res://scripts/fps_camera.gd" id="2_camera"]
-[ext_resource type="Script" path="res://scripts/third_person_camera.gd" id="4_third_camera"]
 [ext_resource type="PackedScene" uid="uid://dvnye2e52t82k" path="res://assets/models/old_pickup/old_pickup.glb" id="3_d7o6t"]
+[ext_resource type="Script" uid="uid://dmq6xb8qmgv46" path="res://scripts/third_person_camera.gd" id="4_third_camera"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_body"]
 size = Vector3(2.24, 1.5, 5.6)
@@ -377,12 +377,11 @@ cull_mask = 3
 far = 20000.0
 script = ExtResource("2_camera")
 
-[node name="ThirdPersonCamera" type="Camera3D" parent="."]
+[node name="ThirdPersonCamera" type="Camera3D" parent="." unique_id=154836930]
 process_mode = 3
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 6.5)
-current = false
-fov = 70.0
 cull_mask = 3
+fov = 70.0
 far = 20000.0
 script = ExtResource("4_third_camera")
 
@@ -399,6 +398,7 @@ damping_compression = 2.0
 damping_relaxation = 2.5
 
 [node name="Wheel_FL" type="MeshInstance3D" parent="FrontLeftWheel" unique_id=650367172]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25217766, 0)
 layers = 2
 mesh = SubResource("ArrayMesh_o2sd4")
 
@@ -415,6 +415,7 @@ damping_compression = 2.0
 damping_relaxation = 2.5
 
 [node name="Wheel_FR" type="MeshInstance3D" parent="FrontRightWheel" unique_id=1892178757]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.241512, 0)
 layers = 2
 mesh = SubResource("ArrayMesh_nfs7c")
 
@@ -431,6 +432,7 @@ damping_compression = 2.4
 damping_relaxation = 3.0
 
 [node name="Wheel_RL" type="MeshInstance3D" parent="RearLeftWheel" unique_id=1687016660]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25258303, 0)
 layers = 2
 mesh = SubResource("ArrayMesh_tii02")
 
@@ -447,5 +449,6 @@ damping_compression = 2.4
 damping_relaxation = 3.0
 
 [node name="Wheel_RR" type="MeshInstance3D" parent="RearRightWheel" unique_id=865302217]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.24318093, 0)
 layers = 2
 mesh = SubResource("ArrayMesh_33hmo")

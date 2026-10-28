@@ -444,7 +444,7 @@ func _update_cycle(delta: float) -> void:
 
 	# --- Заполняющий свет: ночью чуть голубой, но не чёрный ---
 	var ambient_night := Color(0.16, 0.20, 0.34)
-	var ambient_day := Color(0.56, 0.57, 0.62)
+	var ambient_day := Color(0.63, 0.59, 0.52)
 	env.ambient_light_color = ambient_night.lerp(ambient_day, day_level)
 	env.ambient_light_energy = lerpf(night_ambient_energy, 1.0, day_level)
 	env.background_energy_multiplier = lerpf(0.9, 1.0, day_level)

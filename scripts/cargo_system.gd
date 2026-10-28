@@ -17,10 +17,11 @@ const UNLOAD_TIME := 1.0
 const CARGO_VALUE := 150
 
 ## Зона погрузки: настил весов перед погрузочным доком.
-@export var load_zone_center: Vector3 = Vector3(14.0, 0.0, 99.6)
+## Ноль — взять позицию от площадки скрытой базы.
+@export var load_zone_center: Vector3 = Vector3.ZERO
 @export var load_zone_radius: float = 6.0
 ## Зона разгрузки: жёлтая площадка перед воротами склада.
-@export var unload_zone_center: Vector3 = Vector3(29.0, 0.0, 111.0)
+@export var unload_zone_center: Vector3 = Vector3.ZERO
 @export var unload_zone_radius: float = 5.0
 @export var load_time_per_crate: float = LOAD_TIME
 @export var unload_time_per_crate: float = UNLOAD_TIME
@@ -45,6 +46,14 @@ var _slat_mat: StandardMaterial3D
 
 func _ready() -> void:
 	add_to_group("cargo_system")
+	if load_zone_center == Vector3.ZERO:
+		load_zone_center = Vector3(
+			RuralHeight.BASE_CENTER.x - 11.0, 0.0, RuralHeight.BASE_CENTER.y + 1.6
+		)
+	if unload_zone_center == Vector3.ZERO:
+		unload_zone_center = Vector3(
+			RuralHeight.BASE_CENTER.x + 4.0, 0.0, RuralHeight.BASE_CENTER.y + 13.0
+		)
 	_create_materials()
 	_create_hud()
 
