@@ -1,6 +1,6 @@
 @tool
 extends Node3D
-@export var populate: bool = true:
+@export var populate: bool = false:
 	set(v):
 		populate = v
 		if v and Engine.is_editor_hint():
@@ -17,13 +17,10 @@ func _do_populate():
 		"res://scenes/props/Tree_3.tscn",
 		"res://scenes/props/Tree_5.tscn",
 		"res://scenes/props/Tree_7.tscn",
-		"res://scenes/props/Tree_12.tscn",
 	]
-	var rock_path := "res://scenes/props/Rock_1.tscn"
 	var cache: Dictionary = {}
 	for p in tree_paths:
 		cache[p] = load(p)
-	cache[rock_path] = load(rock_path)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 99123
 	var placements: Array = []
@@ -59,8 +56,6 @@ func _do_populate():
 						continue
 					var y := RuralHeight.terrain_height(x, z)
 					var scene_path: String = tree_paths[rng.randi_range(0, tree_paths.size()-1)]
-					if rng.randf() < 0.06:
-						scene_path = rock_path
 					var sc := rng.randf_range(0.8, 1.0)
 					placements.append({"scene": scene_path, "pos": Vector3(x, y, z), "rot": rng.randf() * TAU, "scale": sc})
 			i += 1

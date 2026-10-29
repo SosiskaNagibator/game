@@ -4,7 +4,6 @@
 [ext_resource type="Script" uid="uid://b3ks3umc57wxa" path="res://scripts/country_terrain.gd" id="3_terrain"]
 [ext_resource type="Script" uid="uid://c6ayw2pmovv13" path="res://scripts/country_road.gd" id="4_road"]
 [ext_resource type="Script" uid="uid://wwjmdbo3q686" path="res://scripts/country_fences.gd" id="5_fences"]
-[ext_resource type="Script" uid="uid://dm2n82ijuss4u" path="res://scripts/country_vegetation.gd" id="6_vegetation"]
 [ext_resource type="Script" uid="uid://d2lusy7blc3r5" path="res://scripts/farmstead.gd" id="7_farmstead"]
 [ext_resource type="PackedScene" uid="uid://bog823l7xxwl0" path="res://scenes/Player.tscn" id="8_player"]
 [ext_resource type="PackedScene" uid="uid://c5bn1rd0s2pf0" path="res://scenes/BaseVehicle.tscn" id="9_vehicle"]
@@ -74,9 +73,6 @@ script = ExtResource("4_road")
 
 [node name="Fences" type="Node3D" parent="." unique_id=889106478]
 script = ExtResource("5_fences")
-
-[node name="Vegetation" type="Node3D" parent="." unique_id=115586624]
-script = ExtResource("6_vegetation")
 
 [node name="Settlement" type="Node3D" parent="." unique_id=620302169]
 script = ExtResource("13_settlement")
