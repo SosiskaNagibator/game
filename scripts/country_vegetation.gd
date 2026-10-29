@@ -31,10 +31,12 @@ const TREE_SCALE := 0.62
 const TREES_ENABLED := false
 ## Кусты (подлесок). false — кустов на карте нет.
 const BUSHES_ENABLED := false
-## Камни и их коллизии.
-const ROCKS_ENABLED := true
+## Камни и их коллизии. В базовой сцене камни не нужны.
+const ROCKS_ENABLED := false
 const GRASS_ENABLED := true
 const DETAILS_ENABLED := true
+## Пни — следы старых вырубок. Отключены полностью.
+const STUMPS_ENABLED := false
 ## Радиус вокруг базы и деревни, где каждое дерево — отдельный объект,
 ## который можно выбрать и двигать. Дальше лес остаётся MultiMesh.
 const NEAR_TREE_RADIUS := 150.0
@@ -731,26 +733,27 @@ func _scatter_details() -> void:
 		placed += 1
 
 	# Пни — следы старых вырубок.
-	placed = 0
-	for _attempt in 20000:
-		if placed >= 120:
-			break
-		var x: float = _rng.randf_range(-388.0, 388.0)
-		var z: float = _rng.randf_range(-388.0, 388.0)
-		var near_glade: bool = RuralHeight.glade_mask(x, z) > 0.25
-		if not near_glade and RuralHeight.forest_density(x, z) < 0.30:
-			continue
-		if RuralHeight.road_distance(x, z) < RuralHeight.road_half_width(x, z) + 1.4:
-			continue
-		if RuralHeight.yard_mask(x, z) > 0.03:
-			continue
-		var radius: float = _rng.randf_range(0.32, 0.65)
-		var height: float = _rng.randf_range(0.45, 0.95)
-		var basis := Basis.from_euler(Vector3(0.0, _rng.randf_range(0.0, TAU), 0.0))
-		basis = basis.scaled_local(Vector3(radius, height, radius))
-		var y: float = RuralHeight.terrain_height(x, z)
-		_stumps.append(Transform3D(basis, Vector3(x, y + height * 0.45, z)))
-		placed += 1
+	if STUMPS_ENABLED:
+		placed = 0
+		for _attempt in 20000:
+			if placed >= 120:
+				break
+			var x: float = _rng.randf_range(-388.0, 388.0)
+			var z: float = _rng.randf_range(-388.0, 388.0)
+			var near_glade: bool = RuralHeight.glade_mask(x, z) > 0.25
+			if not near_glade and RuralHeight.forest_density(x, z) < 0.30:
+				continue
+			if RuralHeight.road_distance(x, z) < RuralHeight.road_half_width(x, z) + 1.4:
+				continue
+			if RuralHeight.yard_mask(x, z) > 0.03:
+				continue
+			var radius: float = _rng.randf_range(0.32, 0.65)
+			var height: float = _rng.randf_range(0.45, 0.95)
+			var basis := Basis.from_euler(Vector3(0.0, _rng.randf_range(0.0, TAU), 0.0))
+			basis = basis.scaled_local(Vector3(radius, height, radius))
+			var y: float = RuralHeight.terrain_height(x, z)
+			_stumps.append(Transform3D(basis, Vector3(x, y + height * 0.45, z)))
+			placed += 1
 
 
 # --- Визуал ----------------------------------------------------------------
@@ -845,6 +848,7 @@ func _build_visuals() -> void:
 		_add_multimesh(rock_mesh, _rocks, rock_material, "Rocks", false, false, false, _rock_colors, true)
 	if TREES_ENABLED:
 		_add_multimesh(log_mesh, _logs, log_material, "FallenLogs", true, false, false)
+	if STUMPS_ENABLED:
 		_add_multimesh(stump_mesh, _stumps, stump_material, "Stumps", true, false, false)
 
 	if GRASS_ENABLED:

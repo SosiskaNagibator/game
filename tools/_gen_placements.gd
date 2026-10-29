@@ -76,9 +76,8 @@ func _gen() -> void:
 	var tree_paths: Array[String] = [
 		"res://scenes/props/Tree_1.tscn","res://scenes/props/Tree_2.tscn",
 		"res://scenes/props/Tree_3.tscn","res://scenes/props/Tree_5.tscn",
-		"res://scenes/props/Tree_7.tscn","res://scenes/props/Tree_12.tscn",
+		"res://scenes/props/Tree_7.tscn",
 	]
-	var rock_path := "res://scenes/props/Rock_1.tscn"
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 99123
 	var placements: Array = []
@@ -109,8 +108,6 @@ func _gen() -> void:
 						continue
 					var y := natural_height(x, z)
 					var scene_path: String = tree_paths[rng.randi_range(0, tree_paths.size()-1)]
-					if rng.randf() < 0.06:
-						scene_path = rock_path
 					var sc := rng.randf_range(0.8, 1.0)
 					placements.append({"scene": scene_path, "x": x, "y": y, "z": z, "rot": rng.randf()*TAU, "scale": sc})
 			i += 1
