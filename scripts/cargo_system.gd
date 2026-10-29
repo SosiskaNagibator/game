@@ -17,9 +17,9 @@ const CARGO_VALUE := 150
 
 ## Модель ящика (2.195 м в оригинале) и раскладка в кузове пикапа.
 const CRATE_SCENE: PackedScene = preload(
-	"res://assets/models/wooden_box/low_poly_wooden_box.glb"
+	"res://assets/models/wooden_box/woodbox.glb"
 )
-const CRATE_SCALE := 0.28
+const CRATE_SCALE := 1
 ## Нижняя грань модели в её локальных координатах (пивот у центра по X/Z).
 const CRATE_BOTTOM_LOCAL := -0.1098
 const BED_FLOOR_Y := 0.86

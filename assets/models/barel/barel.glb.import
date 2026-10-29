@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://b0sl21y1mmmo8"
-path="res://.godot/imported/low_poly_wooden_box.glb-5fcd4fd29b05ac95cafcd2734dea1e2c.scn"
+uid="uid://4gcpk3ahuaak"
+path="res://.godot/imported/barel.glb-01d385bce5111a83e2e73ea8681b6cdd.scn"
 
 [deps]
 
-source_file="res://assets/models/wooden_box/low_poly_wooden_box.glb"
-dest_files=["res://.godot/imported/low_poly_wooden_box.glb-5fcd4fd29b05ac95cafcd2734dea1e2c.scn"]
+source_file="res://assets/models/barel/barel.glb"
+dest_files=["res://.godot/imported/barel.glb-01d385bce5111a83e2e73ea8681b6cdd.scn"]
 
 [params]
 
