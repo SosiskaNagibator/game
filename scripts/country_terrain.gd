@@ -6,7 +6,8 @@ extends Node3D
 const TERRAIN_SHADER := preload("res://shaders/terrain_grass.gdshader")
 
 @export var terrain_size: float = 800.0
-@export_range(65, 513, 1) var resolution: int = 321
+## 241 вместо 321: ~44% меньше треугольников (57 600 квадов против 102 400).
+@export_range(65, 513, 1) var resolution: int = 241
 
 
 func _ready() -> void:
@@ -132,7 +133,10 @@ func _build() -> void:
 	mesh_instance.name = "TerrainMesh"
 	mesh_instance.mesh = mesh
 	mesh_instance.material_override = material
-	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	# Земля не должна отбрасывать тени: это ~50k треугольников в shadow pass.
+	# Тени от деревьев/построек на рельеф продолжают работать.
+	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mesh_instance.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 	add_child(mesh_instance)
 
 	# HeightMapShape3D всегда использует шаг 1 м, поэтому масштабируем узел.

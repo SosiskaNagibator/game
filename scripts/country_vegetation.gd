@@ -842,7 +842,7 @@ func _build_visuals() -> void:
 	if BUSHES_ENABLED:
 		_add_multimesh(bush_mesh, _bushes, foliage_material, "Bushes", true, true, false, _bush_tints)
 	if ROCKS_ENABLED:
-		_add_multimesh(rock_mesh, _rocks, rock_material, "Rocks", true, false, false, _rock_colors, true)
+		_add_multimesh(rock_mesh, _rocks, rock_material, "Rocks", false, false, false, _rock_colors, true)
 	if TREES_ENABLED:
 		_add_multimesh(log_mesh, _logs, log_material, "FallenLogs", true, false, false)
 		_add_multimesh(stump_mesh, _stumps, stump_material, "Stumps", true, false, false)
@@ -870,6 +870,10 @@ func _build_grass() -> void:
 	instance.multimesh = multimesh
 	instance.material_override = material
 	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	instance.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	# Трава нужна только рядом: дальше это просто шум пикселей, а вершин много.
+	instance.visibility_range_end = 90.0
+	instance.visibility_range_end_margin = 12.0
 	add_child(instance)
 
 
@@ -948,6 +952,11 @@ func _add_multimesh(
 		if cast_shadow
 		else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	)
+	instance.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+	# Дальний план: деревья/камни исчезают за пределами видимости, не
+	# нагружая ни основной, ни теневой проход.
+	instance.visibility_range_end = 260.0 if node_name == "Rocks" else 450.0
+	instance.visibility_range_end_margin = 30.0
 	add_child(instance)
 	_multimeshes[node_name] = instance
 

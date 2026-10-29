@@ -27,26 +27,43 @@ const RADIO_TRACK: AudioStream = preload(
 @export_range(0.1, 1.0, 0.05) var reverse_force_multiplier: float = 0.6
 
 @export_group("Руль")
-## Максимальный угол поворота колёс в радианах (0.5 рад ≈ 28.6°).
-@export_range(0.1, 1.2, 0.01, "radians_as_degrees") var max_steer_angle: float = 0.5
+## Максимальный угол поворота колёс в радианах (0.65 рад ≈ 37.2°).
+@export_range(0.1, 1.2, 0.01, "radians_as_degrees") var max_steer_angle: float = 0.65
 ## Скорость сглаживания руля (чем больше — тем резче реакция).
-@export_range(0.5, 20.0, 0.5) var steer_smoothing: float = 5.0
+@export_range(0.5, 20.0, 0.5) var steer_smoothing: float = 8.0
 ## Доля максимального угла руля на высокой скорости (защита от переворота).
-@export_range(0.1, 1.0, 0.05) var high_speed_steer_factor: float = 0.55
+@export_range(0.1, 1.0, 0.05) var high_speed_steer_factor: float = 0.75
 ## Скорость (км/ч), при которой достигается high_speed_steer_factor.
 @export_range(30.0, 200.0, 5.0) var high_speed_steer_kmh: float = 120.0
 ## Предельное боковое ускорение, м/с². Ограничивает угол руля на скорости,
 ## чтобы машина не переворачивалась от резкого поворота. 0 — отключить.
-## 12 м/с² оставляет запас до порога опрокидывания пикапа (~13.6 м/с²).
-@export_range(0.0, 20.0, 0.5) var max_lateral_accel: float = 12.0
+## Высокий порог (25 м/с²) нужен, чтобы ограничение не «душило» руль заранее.
+@export_range(0.0, 40.0, 0.5) var max_lateral_accel: float = 25.0
+
+@export_group("Масса и центр масс")
+## Высота центра масс в локальных координатах машины, м.
+## Земля в этой сцене проходит примерно на y = -0.05, поэтому -0.5 — это COM
+## ПОД дорогой (физически невозможно; именно это давало «плавучесть»).
+## Порог опрокидывания: h_над_дорогой <= (полуколея * g) / max_lateral_accel
+## = (0.86 * 9.81) / 25 = 0.337 м. При земле на -0.05 это local y <= 0.287.
+## 0.20 оставляет запас и проверено: полный руль на ~64 км/ч, крен ~2.8°, без переворота.
+@export_range(-1.0, 2.0, 0.01) var center_of_mass_height: float = 0.20
 
 @export_group("Устойчивость")
+## Пользовательский анти-крен. Выключите, чтобы проверить нативную физику
+## подвески без вмешательства скрипта.
+@export var anti_roll_enabled: bool = false
 ## Сила стабилизации крена кузова, Н·м на радиан.
-@export_range(0.0, 40000.0, 100.0) var anti_roll_strength: float = 34000.0
+## Снижена: анти-крен не должен спорить с пружинами и раскачивать кузов.
+@export_range(0.0, 40000.0, 100.0) var anti_roll_strength: float = 16000.0
 ## Демпфирование крена, Н·м на рад/с.
-@export_range(0.0, 30000.0, 100.0) var anti_roll_damping: float = 12000.0
+## Выше силы — стабилизатор гасит раскачку, а не создаёт её.
+@export_range(0.0, 30000.0, 100.0) var anti_roll_damping: float = 18000.0
 ## Максимальный стабилизирующий момент, Н·м.
-@export_range(0.0, 12000.0, 100.0) var max_anti_roll_torque: float = 8000.0
+@export_range(0.0, 12000.0, 100.0) var max_anti_roll_torque: float = 6000.0
+## Во сколько раз ослабляется анти-крен на ручнике (0 — полностью выключен).
+## Позволяет кузову свободно крениться и заходить в занос.
+@export_range(0.0, 1.0, 0.05) var handbrake_anti_roll_factor: float = 0.15
 ## Скорость (км/ч), с которой начинает работать стабилизация крена.
 @export_range(0.0, 80.0, 1.0) var stability_start_kmh: float = 30.0
 ## Скорость (км/ч), на которой стабилизация выходит на полную силу.
@@ -58,12 +75,14 @@ const RADIO_TRACK: AudioStream = preload(
 ## Сила торможения рабочей тормозной системы на каждое колесо, Н.
 @export_range(0.0, 300.0, 1.0) var max_brake_force: float = 30.0
 ## Сила торможения ручника на задние колёса, Н.
-@export_range(0.0, 300.0, 1.0) var handbrake_force: float = 55.0
+## Высокая — задние колёса должны блокироваться и скользить, а не плавно тормозить.
+@export_range(0.0, 400.0, 1.0) var handbrake_force: float = 110.0
 ## Дополнительное замедление рабочей тормозной системы, м/с².
 ## Делает тормозной путь предсказуемым независимо от массы машины.
 @export_range(0.0, 15.0, 0.1) var brake_deceleration: float = 3.5
 ## Замедление ручником, м/с².
-@export_range(0.0, 10.0, 0.1) var handbrake_deceleration: float = 1.2
+## Небольшое: ручник нужен для заноса, а не для остановки машины.
+@export_range(0.0, 10.0, 0.1) var handbrake_deceleration: float = 0.3
 ## Замедление двигателем при отпущенном газе, м/с².
 @export_range(0.0, 5.0, 0.1) var engine_braking_deceleration: float = 0.9
 
@@ -76,8 +95,8 @@ const RADIO_TRACK: AudioStream = preload(
 @export_range(40.0, 250.0, 5.0) var max_speed_kmh: float = 125.0
 
 @export_group("Сцепление и помощники")
-## Доля сцепления задних колёс на ручнике (0.35–0.7 — управляемый занос).
-@export_range(0.2, 1.0, 0.05) var handbrake_grip_factor: float = 0.45
+## Доля сцепления задних колёс на ручнике (0.1–0.2 — глубокий управляемый занос).
+@export_range(0.0, 1.0, 0.05) var handbrake_grip_factor: float = 0.15
 ## Антипробуксовка: насколько снижать тягу при пробуксовке (0 — выключено).
 @export_range(0.0, 0.9, 0.05) var traction_control: float = 0.35
 
@@ -120,6 +139,11 @@ var _empty_mass: float = 0.0
 # Автомагнитола (создаётся в _ready).
 var _radio: AudioStreamPlayer3D = null
 var _radio_on: bool = false
+# Кэш DayNightCycle: не ищем ноду в группе каждый физический кадр.
+var _day_night: Node = null
+var _headlight_check_timer: float = 0.0
+# Пыль/камешки выключены, пока машина пустая.
+var _wheel_fx_idle: bool = false
 
 ## Игрок, который сейчас управляет машиной. null — машина пустая.
 var driver: Node = null
@@ -134,9 +158,11 @@ var _wheel_effects: Array[Dictionary] = []
 
 
 func _ready() -> void:
-	# Низкий центр масс сильно снижает склонность кузова к опрокидыванию.
+	# Центр масс задаём в локальных координатах кузова. ВАЖНО: у этой машины
+	# земля проходит примерно на y = -0.05, поэтому отрицательная высота
+	# (-0.5) находится под дорогой и ломает физику крена/тангажа.
 	center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
-	center_of_mass = Vector3(0.0, -0.5, 0.0)
+	center_of_mass = Vector3(0.0, center_of_mass_height, 0.0)
 	# Запоминаем снаряжённую массу: груз будет добавляться к ней.
 	_empty_mass = mass
 	# Машина не должна "засыпать" на стоянке, иначе первый газ может не сработать.
@@ -150,6 +176,7 @@ func _ready() -> void:
 	_setup_wheel_effects()
 	_setup_headlights()
 	_setup_radio()
+	_day_night = get_tree().get_first_node_in_group("day_night")
 
 
 ## Скрываем колёса, встроенные в модель кузова: ими управляют VehicleWheel3D.
@@ -325,6 +352,17 @@ func _update_wheel_effects(delta: float) -> void:
 		chips.emitting = chips.amount_ratio > 0.02
 
 
+## Погасить всю пыль/камешки разом (машина пустая или только что остановилась).
+func _stop_wheel_effects() -> void:
+	for effect in _wheel_effects:
+		var dust: GPUParticles3D = effect["dust"]
+		var chips: GPUParticles3D = effect["chips"]
+		dust.emitting = false
+		chips.emitting = false
+		dust.amount_ratio = 0.0
+		chips.amount_ratio = 0.0
+
+
 func _make_dust_mesh() -> Mesh:
 	var gradient := Gradient.new()
 	gradient.set_color(0, Color(1.0, 1.0, 1.0, 0.92))
@@ -430,8 +468,15 @@ func _make_chip_process() -> ParticleProcessMaterial:
 
 
 func _physics_process(delta: float) -> void:
-	_update_wheel_effects(delta)
-	_update_headlights()
+	if is_occupied():
+		_wheel_fx_idle = false
+		_update_wheel_effects(delta)
+	else:
+		# Пустая машина стоит: не гоняем частицы и RPM-запросы каждый тик.
+		if not _wheel_fx_idle:
+			_wheel_fx_idle = true
+			_stop_wheel_effects()
+	_update_headlights(delta)
 
 	# Пустой машиной никто не управляет — держим её на стояночном тормозе.
 	if not is_occupied():
@@ -471,13 +516,30 @@ func _setup_headlights() -> void:
 		_headlights.append(light)
 
 
-func _update_headlights() -> void:
-	var on: bool = headlights_always_on
-	if headlights_auto and not on:
-		var cycle := get_tree().get_first_node_in_group("day_night")
-		if cycle != null and cycle.has_method("is_night"):
-			on = cycle.is_night()
+func _update_headlights(delta: float) -> void:
+	if headlights_always_on:
+		_set_headlights(true)
+		return
 
+	# Проверяем ночь 2 раза в секунду, а не каждый физический тик.
+	_headlight_check_timer -= delta
+	if _headlight_check_timer > 0.0:
+		return
+	_headlight_check_timer = 0.5
+
+	if not headlights_auto:
+		_set_headlights(false)
+		return
+
+	if _day_night == null or not is_instance_valid(_day_night):
+		_day_night = get_tree().get_first_node_in_group("day_night")
+	var on := false
+	if _day_night != null and _day_night.has_method("is_night"):
+		on = _day_night.is_night()
+	_set_headlights(on)
+
+
+func _set_headlights(on: bool) -> void:
 	if on == _headlights_on:
 		return
 	_headlights_on = on
@@ -572,6 +634,9 @@ func _apply_steering_angles(angle: float) -> void:
 
 ## Стабилизация кузова на скорости: гасим неестественный крен.
 func _update_stability(forward_speed: float) -> void:
+	if not anti_roll_enabled:
+		return
+
 	var speed: float = absf(forward_speed)
 	var speed_kmh: float = speed * 3.6
 	if speed_kmh <= stability_start_kmh:
@@ -591,6 +656,11 @@ func _update_stability(forward_speed: float) -> void:
 		0.0,
 		1.0
 	)
+	# На ручнике анти-крен почти выключаем: кузов должен свободно крениться,
+	# иначе стабилизатор «борется» с заносом и машина просто тормозит.
+	var handbrake: bool = Input.is_action_pressed("handbrake")
+	var stability_scale: float = handbrake_anti_roll_factor if handbrake else 1.0
+
 	var forward: Vector3 = -global_transform.basis.z
 	var right: Vector3 = global_transform.basis.x
 
@@ -600,7 +670,7 @@ func _update_stability(forward_speed: float) -> void:
 	var torque: float = roll_angle * anti_roll_strength - roll_rate * anti_roll_damping
 	torque = clampf(torque, -max_anti_roll_torque, max_anti_roll_torque)
 
-	apply_torque(forward * torque * speed_ratio)
+	apply_torque(forward * torque * speed_ratio * stability_scale)
 
 
 ## Аэродинамика: сопротивление воздуха, качение и прижимная сила.
@@ -635,10 +705,12 @@ func _grounded_wheels() -> int:
 
 
 ## Ручник: задние колёса теряют часть сцепления — машина уходит в занос.
+## Сцепление сбрасываем быстро, а возвращаем плавно: так занос можно удержать,
+## а после отпускания ручника задняя ось не «прилипает» мгновенно.
 func _update_handbrake_grip(delta: float) -> void:
 	var handbrake: bool = Input.is_action_pressed("handbrake")
 	var factor: float = handbrake_grip_factor if handbrake else 1.0
-	var rate: float = 18.0 * delta
+	var rate: float = (70.0 if handbrake else 14.0) * delta
 	for wheel in _rear_wheels:
 		var base: float = float(_base_friction.get(wheel, wheel.wheel_friction_slip))
 		wheel.wheel_friction_slip = move_toward(
@@ -682,8 +754,8 @@ func _update_engine_and_brakes(forward_speed: float) -> void:
 	# Антипробуксовка: не даём ведущим колёсам бесконечно буксовать.
 	engine_force *= _traction_factor()
 
-	# Ручник снимает тягу и добавляет замедление, но не «якорит» машину,
-	# иначе управляемый занос превращается в резкую остановку.
+	# Ручник снимает тягу и добавляет лишь небольшое замедление, чтобы машина
+	# не «якорилась»: занос должен продолжаться по инерции.
 	if handbrake:
 		engine_force = 0.0
 		deceleration = maxf(deceleration, handbrake_deceleration)

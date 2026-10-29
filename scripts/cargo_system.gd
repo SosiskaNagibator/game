@@ -54,6 +54,8 @@ var _crate_nodes: Array[Node3D] = []
 var _base_vehicle_mass: float = 0.0
 var _status_label: Label = null
 var _hint_label: Label = null
+## HUD перерисовываем 10 раз в секунду: текст меняется медленно, а layout — дорогой.
+var _hud_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -169,7 +171,10 @@ func _process(delta: float) -> void:
 		_load_progress = move_toward(_load_progress, 0.0, delta * 3.0)
 		_unload_progress = move_toward(_unload_progress, 0.0, delta * 3.0)
 
-	_update_hud(load_vehicle != null, unload_vehicle != null)
+	_hud_timer -= delta
+	if _hud_timer <= 0.0:
+		_hud_timer = 0.1
+		_update_hud(load_vehicle != null, unload_vehicle != null)
 
 
 func _vehicle_in_zone(center: Vector3, radius: float) -> VehicleBody3D:

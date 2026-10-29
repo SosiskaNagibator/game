@@ -359,7 +359,7 @@ shadow_mesh = SubResource("ArrayMesh_b1q44")
 [node name="BaseVehicle" type="VehicleBody3D" unique_id=273269634 groups=["vehicles"]]
 mass = 1500.0
 center_of_mass_mode = 1
-center_of_mass = Vector3(0, 0.42, 0)
+center_of_mass = Vector3(0, 0.2, 0)
 can_sleep = false
 script = ExtResource("1_vehicle")
 max_engine_force = 6200.0
@@ -392,10 +392,10 @@ wheel_radius = 0.45
 wheel_rest_length = 0.25
 wheel_friction_slip = 12.0
 suspension_travel = 0.28
-suspension_stiffness = 55.0
+suspension_stiffness = 50.0
 suspension_max_force = 18000.0
-damping_compression = 2.0
-damping_relaxation = 2.5
+damping_compression = 4.0
+damping_relaxation = 5.0
 
 [node name="Wheel_FL" type="MeshInstance3D" parent="FrontLeftWheel" unique_id=650367172]
 layers = 2
@@ -408,10 +408,10 @@ wheel_radius = 0.45
 wheel_rest_length = 0.25
 wheel_friction_slip = 12.0
 suspension_travel = 0.28
-suspension_stiffness = 55.0
+suspension_stiffness = 50.0
 suspension_max_force = 18000.0
-damping_compression = 2.0
-damping_relaxation = 2.5
+damping_compression = 4.0
+damping_relaxation = 5.0
 
 [node name="Wheel_FR" type="MeshInstance3D" parent="FrontRightWheel" unique_id=1892178757]
 layers = 2
@@ -424,10 +424,10 @@ wheel_radius = 0.45
 wheel_rest_length = 0.25
 wheel_friction_slip = 14.0
 suspension_travel = 0.24
-suspension_stiffness = 70.0
+suspension_stiffness = 65.0
 suspension_max_force = 22000.0
-damping_compression = 2.4
-damping_relaxation = 3.0
+damping_compression = 4.5
+damping_relaxation = 5.5
 
 [node name="Wheel_RL" type="MeshInstance3D" parent="RearLeftWheel" unique_id=1687016660]
 layers = 2
@@ -440,10 +440,10 @@ wheel_radius = 0.45
 wheel_rest_length = 0.25
 wheel_friction_slip = 14.0
 suspension_travel = 0.24
-suspension_stiffness = 70.0
+suspension_stiffness = 65.0
 suspension_max_force = 22000.0
-damping_compression = 2.4
-damping_relaxation = 3.0
+damping_compression = 4.5
+damping_relaxation = 5.5
 
 [node name="Wheel_RR" type="MeshInstance3D" parent="RearRightWheel" unique_id=865302217]
 layers = 2

@@ -24,7 +24,7 @@ ambient_light_energy = 0.42
 reflected_light_source = 2
 tonemap_mode = 2
 tonemap_exposure = 1.05
-ssao_enabled = true
+ssao_enabled = false
 ssao_radius = 2.0
 fog_enabled = true
 fog_light_color = Color(0.06, 0.075, 0.1, 1)
@@ -168,7 +168,8 @@ transform = Transform3D(0.88294756, 0.31413782, -0.34888536, 0, 0.7431448, 0.669
 light_color = Color(0.36, 0.47, 0.66, 1)
 light_energy = 0.42
 shadow_enabled = true
-directional_shadow_max_distance = 80.0
+directional_shadow_mode = 1
+directional_shadow_max_distance = 50.0
 
 [node name="Ground" type="MeshInstance3D" parent="." unique_id=754614459]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, -1)
@@ -228,21 +229,18 @@ mesh = SubResource("Box_lamp")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 6.1, -1)
 light_color = Color(1, 0.48, 0.16, 1)
 light_energy = 11.0
-shadow_enabled = true
 omni_range = 10.0
 
 [node name="BayLightCenter" type="OmniLight3D" parent="Warehouse" unique_id=1925288838]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 5.9, -1)
 light_color = Color(1, 0.56, 0.24, 1)
 light_energy = 14.0
-shadow_enabled = true
 omni_range = 11.0
 
 [node name="BayLightRight" type="OmniLight3D" parent="Warehouse" unique_id=845936607]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.2, 5.9, -1)
 light_color = Color(1, 0.48, 0.14, 1)
 light_energy = 11.0
-shadow_enabled = true
 omni_range = 10.0
 
 [node name="WarehouseTitle" type="Label3D" parent="Warehouse" unique_id=929725716]

@@ -12,6 +12,7 @@
 [ext_resource type="Script" uid="uid://3jwr4y5tabtq" path="res://scripts/cargo_system.gd" id="11_cargo"]
 [ext_resource type="Script" uid="uid://oenv7eydrp8a" path="res://scripts/tree_mover.gd" id="12_treemover"]
 [ext_resource type="Script" uid="uid://bgxtjh35ltvem" path="res://scripts/settlement.gd" id="13_settlement"]
+[ext_resource type="PackedScene" uid="uid://cvc0i5li7qqcx" path="res://assets/models/hippo/hippo.glb" id="14_8k3il"]
 [ext_resource type="PackedScene" uid="uid://cf3cgh44h8qxs" path="res://scenes/Decor.tscn" id="14_decor"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
@@ -31,12 +32,12 @@ sky = SubResource("Sky_st1pv")
 ambient_light_source = 3
 ambient_light_sky_contribution = 0.5
 reflected_light_source = 2
-tonemap_mode = 4
+tonemap_mode = 2
 tonemap_exposure = 0.98
-ssao_enabled = true
+ssao_enabled = false
 ssao_radius = 1.6
 ssao_intensity = 1.35
-glow_enabled = true
+glow_enabled = false
 glow_intensity = 0.25
 glow_bloom = 0.02
 glow_hdr_threshold = 1.15
@@ -62,9 +63,10 @@ transform = Transform3D(0.57357645, 0.52654064, -0.6275068, 0, 0.76604426, 0.642
 light_color = Color(1, 0.94, 0.82, 1)
 light_energy = 1.18
 shadow_enabled = true
-shadow_bias = 0.04
-shadow_normal_bias = 1.4
-directional_shadow_max_distance = 190.0
+shadow_bias = 0.06
+shadow_normal_bias = 1.1
+directional_shadow_mode = 1
+directional_shadow_max_distance = 110.0
 
 [node name="Terrain" type="Node3D" parent="." unique_id=754614459]
 script = ExtResource("3_terrain")
@@ -90,7 +92,6 @@ transform = Transform3D(0.8915683, 0, 0.45288628, 0, 1, 0, -0.45288628, 0, 0.891
 
 [node name="BaseVehicle" parent="." unique_id=1056092871 instance=ExtResource("9_vehicle")]
 transform = Transform3D(-0.96174127, 0, -0.2739593, 0, 1, 0, 0.2739593, 0, -0.96174127, -212.22952, -6.237631, -152.09349)
-center_of_mass = Vector3(0, 0.62, 0)
 
 [node name="DayNightCycle" type="Node3D" parent="." unique_id=1938774590 node_paths=PackedStringArray("world_env", "player_or_camera")]
 script = ExtResource("10_st1pv")
@@ -106,3 +107,6 @@ script = ExtResource("11_cargo")
 
 [node name="TreeMover" type="Node3D" parent="." unique_id=2094774592]
 script = ExtResource("12_treemover")
+
+[node name="Sketchfab_Scene" parent="." unique_id=1125806567 instance=ExtResource("14_8k3il")]
+transform = Transform3D(0.19548778, 0.13601296, -0.97122854, 0.2213259, 0.958668, 0.1788022, 0.95540506, -0.24991173, 0.15730473, -184.41963, -3.2205856, -92.967155)
