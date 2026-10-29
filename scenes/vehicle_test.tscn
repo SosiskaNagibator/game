@@ -118,7 +118,7 @@ shape = SubResource("BoxShape3D_crate")
 
 [node name="BaseVehicle" parent="." unique_id=727373787 instance=ExtResource("1_vehicle")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
-center_of_mass = Vector3(0, 0.62, 0)
+center_of_mass = Vector3(0, 0.2, 0)
 
 [node name="Player" parent="." unique_id=1508467242 instance=ExtResource("2_player")]
 transform = Transform3D(-3.6199901e-06, 0, 1, 0, 1, 0, -1, 0, -3.6199901e-06, 4, 0.1, 0)

@@ -90,7 +90,7 @@ transform = Transform3D(0.8915683, 0, 0.45288628, 0, 1, 0, -0.45288628, 0, 0.891
 
 [node name="BaseVehicle" parent="." unique_id=1056092871 instance=ExtResource("9_vehicle")]
 transform = Transform3D(-0.96174127, 0, -0.2739593, 0, 1, 0, 0.2739593, 0, -0.96174127, -212.22952, -6.237631, -152.09349)
-center_of_mass = Vector3(0, 0.62, 0)
+center_of_mass = Vector3(0, 0.2, 0)
 
 [node name="DayNightCycle" type="Node3D" parent="." unique_id=1938774590 node_paths=PackedStringArray("world_env", "player_or_camera")]
 script = ExtResource("10_st1pv")
