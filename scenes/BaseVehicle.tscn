@@ -8,6 +8,9 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_body"]
 size = Vector3(2.24, 1.5, 5.6)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_cargo"]
+size = Vector3(1.9, 1.2, 2.3)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_u5o2s"]
 resource_name = "Tire"
 cull_mode = 2
@@ -369,6 +372,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0.1)
 shape = SubResource("BoxShape3D_body")
 
 [node name="Body" parent="." unique_id=988793985 instance=ExtResource("3_d7o6t")]
+
+[node name="CargoArea" type="Area3D" parent="." unique_id=1145923351 groups=["cargo_area"]]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+monitorable = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CargoArea" unique_id=1426850103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.46, 1.66)
+shape = SubResource("BoxShape3D_cargo")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=191317599]
 process_mode = 3

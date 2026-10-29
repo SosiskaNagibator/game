@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://bgxtjh35ltvem" path="res://scripts/settlement.gd" id="13_settlement"]
 [ext_resource type="PackedScene" uid="uid://cvc0i5li7qqcx" path="res://assets/models/hippo/hippo.glb" id="14_8k3il"]
 [ext_resource type="PackedScene" uid="uid://cf3cgh44h8qxs" path="res://scenes/Decor.tscn" id="14_decor"]
+[ext_resource type="PackedScene" path="res://scenes/CargoBox.tscn" id="15_cargobox"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
 sky_top_color = Color(0.2, 0.4, 0.8, 1)
@@ -33,10 +34,8 @@ ambient_light_sky_contribution = 0.5
 reflected_light_source = 2
 tonemap_mode = 2
 tonemap_exposure = 0.98
-ssao_enabled = false
 ssao_radius = 1.6
 ssao_intensity = 1.35
-glow_enabled = false
 glow_intensity = 0.25
 glow_bloom = 0.02
 glow_hdr_threshold = 1.15
@@ -59,12 +58,14 @@ environment = SubResource("Environment_main")
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=1152824643]
 transform = Transform3D(0.57357645, 0.52654064, -0.6275068, 0, 0.76604426, 0.6427875, 0.81915206, -0.36868772, 0.439385, -319.50125, 177.43387, 265.0973)
+visible = false
 light_color = Color(1, 0.94, 0.82, 1)
 light_energy = 1.18
 shadow_enabled = true
 shadow_bias = 0.06
 shadow_normal_bias = 1.1
 directional_shadow_mode = 1
+directional_shadow_split_1 = 0.18
 directional_shadow_max_distance = 110.0
 
 [node name="Terrain" type="Node3D" parent="." unique_id=754614459]
@@ -88,6 +89,24 @@ transform = Transform3D(0.8915683, 0, 0.45288628, 0, 1, 0, -0.45288628, 0, 0.891
 
 [node name="BaseVehicle" parent="." unique_id=1056092871 instance=ExtResource("9_vehicle")]
 transform = Transform3D(-0.96174127, 0, -0.2739593, 0, 1, 0, 0.2739593, 0, -0.96174127, -212.22952, -6.237631, -152.09349)
+
+[node name="CargoBox1" parent="." unique_id=1864205173 instance=ExtResource("15_cargobox")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -240.80734, -5.452999, -176.24733)
+
+[node name="CargoBox2" parent="." unique_id=1864205174 instance=ExtResource("15_cargobox")]
+transform = Transform3D(0.92387956, 0, -0.38268343, 0, 1, 0, 0.38268343, 0, 0.92387956, -239.40735, -5.452999, -176.35732)
+
+[node name="CargoBox3" parent="." unique_id=1864205175 instance=ExtResource("15_cargobox")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -240.764, -5.474752, -174.62376)
+
+[node name="CargoBox4" parent="." unique_id=1864205176 instance=ExtResource("15_cargobox")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -237.8, -5.416933, -175.42906)
+
+[node name="CargoBox5" parent="." unique_id=1864205177 instance=ExtResource("15_cargobox")]
+transform = Transform3D(0.92387956, 0, 0.38268343, 0, 1, 0, -0.38268343, 0, 0.92387956, -240, -5.416933, -172.82907)
+
+[node name="CargoBox6" parent="." unique_id=1864205178 instance=ExtResource("15_cargobox")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -237.6, -5.416933, -173.22906)
 
 [node name="DayNightCycle" type="Node3D" parent="." unique_id=1938774590 node_paths=PackedStringArray("world_env", "player_or_camera")]
 script = ExtResource("10_st1pv")

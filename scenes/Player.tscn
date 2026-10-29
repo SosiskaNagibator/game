@@ -32,6 +32,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 current = true
 far = 20000.0
 
+[node name="InteractRay" type="RayCast3D" parent="Camera3D" unique_id=1640233871]
+target_position = Vector3(0, 0, -4)
+collision_mask = 3
+collide_with_areas = true
+
+[node name="CargoRay" type="RayCast3D" parent="Camera3D" unique_id=1274905582]
+target_position = Vector3(0, 0, -4)
+collision_mask = 2
+collide_with_areas = true
+
+[node name="CargoHold" type="Marker3D" parent="Camera3D" unique_id=2035156477]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, -0.45, -1.6)
+
 [node name="HUD" type="CanvasLayer" parent="." unique_id=574585125]
 
 [node name="Hint" type="Label" parent="HUD" unique_id=1354651618]
