@@ -12,7 +12,10 @@ var fullscreen_toggle: CheckButton
 var world_environment: WorldEnvironment
 var camera: Camera3D
 var lights: Array[OmniLight3D] = []
+var _light_base_energy: Array[float] = []
 var _time := 0.0
+## Пульсацию фонарей обновляем 10 раз в секунду, а не каждый кадр.
+var _pulse_timer := 0.0
 ## Low three-quarter shot by the pickup's front, looking into the loading bay.
 var _base_camera_position := Vector3(-2.70117, 2.243596, 7.406117)
 var _camera_target := Vector3(2.29, 3.38, 0.0)
@@ -59,6 +62,7 @@ func _ready() -> void:
 		var light := get_node_or_null(path) as OmniLight3D
 		if light:
 			lights.append(light)
+			_light_base_energy.append(light.light_energy)
 
 func _process(delta: float) -> void:
 	_time += delta
@@ -69,10 +73,15 @@ func _process(delta: float) -> void:
 			cos(_time * 0.18) * 0.12
 		)
 		camera.look_at(_camera_target, Vector3.UP)
+
+	_pulse_timer -= delta
+	if _pulse_timer > 0.0:
+		return
+	_pulse_timer = 0.1
 	for index in lights.size():
 		var light := lights[index]
 		var pulse := 1.0 + sin(_time * 2.0 + float(index) * 0.8) * 0.035
-		light.light_energy = light.light_energy * 0.98 + light.light_energy * 0.02 * pulse
+		light.light_energy = _light_base_energy[index] * pulse
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and settings_panel and settings_panel.visible:

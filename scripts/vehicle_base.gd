@@ -139,6 +139,11 @@ var _empty_mass: float = 0.0
 # Автомагнитола (создаётся в _ready).
 var _radio: AudioStreamPlayer3D = null
 var _radio_on: bool = false
+# Кэш DayNightCycle: не ищем ноду в группе каждый физический кадр.
+var _day_night: Node = null
+var _headlight_check_timer: float = 0.0
+# Пыль/камешки выключены, пока машина пустая.
+var _wheel_fx_idle: bool = false
 
 ## Игрок, который сейчас управляет машиной. null — машина пустая.
 var driver: Node = null
@@ -171,6 +176,7 @@ func _ready() -> void:
 	_setup_wheel_effects()
 	_setup_headlights()
 	_setup_radio()
+	_day_night = get_tree().get_first_node_in_group("day_night")
 
 
 ## Скрываем колёса, встроенные в модель кузова: ими управляют VehicleWheel3D.
@@ -346,6 +352,17 @@ func _update_wheel_effects(delta: float) -> void:
 		chips.emitting = chips.amount_ratio > 0.02
 
 
+## Погасить всю пыль/камешки разом (машина пустая или только что остановилась).
+func _stop_wheel_effects() -> void:
+	for effect in _wheel_effects:
+		var dust: GPUParticles3D = effect["dust"]
+		var chips: GPUParticles3D = effect["chips"]
+		dust.emitting = false
+		chips.emitting = false
+		dust.amount_ratio = 0.0
+		chips.amount_ratio = 0.0
+
+
 func _make_dust_mesh() -> Mesh:
 	var gradient := Gradient.new()
 	gradient.set_color(0, Color(1.0, 1.0, 1.0, 0.92))
@@ -451,8 +468,15 @@ func _make_chip_process() -> ParticleProcessMaterial:
 
 
 func _physics_process(delta: float) -> void:
-	_update_wheel_effects(delta)
-	_update_headlights()
+	if is_occupied():
+		_wheel_fx_idle = false
+		_update_wheel_effects(delta)
+	else:
+		# Пустая машина стоит: не гоняем частицы и RPM-запросы каждый тик.
+		if not _wheel_fx_idle:
+			_wheel_fx_idle = true
+			_stop_wheel_effects()
+	_update_headlights(delta)
 
 	# Пустой машиной никто не управляет — держим её на стояночном тормозе.
 	if not is_occupied():
@@ -492,13 +516,30 @@ func _setup_headlights() -> void:
 		_headlights.append(light)
 
 
-func _update_headlights() -> void:
-	var on: bool = headlights_always_on
-	if headlights_auto and not on:
-		var cycle := get_tree().get_first_node_in_group("day_night")
-		if cycle != null and cycle.has_method("is_night"):
-			on = cycle.is_night()
+func _update_headlights(delta: float) -> void:
+	if headlights_always_on:
+		_set_headlights(true)
+		return
 
+	# Проверяем ночь 2 раза в секунду, а не каждый физический тик.
+	_headlight_check_timer -= delta
+	if _headlight_check_timer > 0.0:
+		return
+	_headlight_check_timer = 0.5
+
+	if not headlights_auto:
+		_set_headlights(false)
+		return
+
+	if _day_night == null or not is_instance_valid(_day_night):
+		_day_night = get_tree().get_first_node_in_group("day_night")
+	var on := false
+	if _day_night != null and _day_night.has_method("is_night"):
+		on = _day_night.is_night()
+	_set_headlights(on)
+
+
+func _set_headlights(on: bool) -> void:
 	if on == _headlights_on:
 		return
 	_headlights_on = on

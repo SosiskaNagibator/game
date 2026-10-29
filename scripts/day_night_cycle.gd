@@ -45,8 +45,13 @@ extends Node3D
 ## Минимальная яркость ночного заполняющего света: ночь должна быть
 ## тёмной, но не чёрной, иначе на дороге ничего не видно.
 @export var night_ambient_energy: float = 0.28
-@export var shadow_distance: float = 300.0
+## Дальность теней солнца. 110 м хватает, чтобы тени читались вокруг машины,
+## а shadow pass дешевеет в разы по сравнению с 300 м.
+@export var shadow_distance: float = 110.0
 @export var shadows_enabled: bool = true
+## Как часто пересчитывать небо/свет/туман, Гц. Каждый кадр это не нужно:
+## изменение освещения за 0.1 с незаметно, а цена — заметная.
+@export var environment_update_hz: float = 10.0
 
 @export_group("Цвета неба")
 @export var day_sky_top: Color = Color(0.20, 0.40, 0.80)
@@ -72,8 +77,9 @@ extends Node3D
 @export var cloud_rings: int = 12
 
 @export_group("Glow (свечение)")
-@export var glow_enabled: bool = true
-@export_range(1, 7, 1) var glow_level_count: int = 4
+## Glow — дорогой полноэкранный blur; на слабых устройствах лучше держать выключенным.
+@export var glow_enabled: bool = false
+@export_range(1, 7, 1) var glow_level_count: int = 2
 
 # --- Внутреннее состояние ---------------------------------------------------
 var current_time: float = 0.0
@@ -95,6 +101,8 @@ var _clock_label: Label = null
 var _last_clock_text: String = ""
 var _star_material_dim: StandardMaterial3D
 var _star_material_bright: StandardMaterial3D
+## Накопитель времени для троттлинга визуальных обновлений.
+var _visual_timer: float = 0.0
 
 
 # ==============================================================================
@@ -176,26 +184,38 @@ func _ready() -> void:
 
 func _create_lights() -> void:
 	# --- Солнце ---
-	sun_light = DirectionalLight3D.new()
-	sun_light.name = "SunLight"
+	# В сцене уже есть DirectionalLight3D "Sun" (его настраивает RuralBase).
+	# Переиспользуем его: второй shadow-casting directional light — это второй
+	# полный проход теней каждый кадр.
+	var existing := get_parent().get_node_or_null("Sun") as DirectionalLight3D
+	if existing != null:
+		sun_light = existing
+	else:
+		sun_light = DirectionalLight3D.new()
+		sun_light.name = "SunLight"
+		add_child(sun_light)
+
 	sun_light.shadow_enabled = shadows_enabled
 	sun_light.directional_shadow_max_distance = shadow_distance
-	sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-	# Мягкие тени и без «лесенки» на краях.
-	sun_light.light_angular_distance = 0.5
-	sun_light.shadow_bias = 0.03
-	sun_light.shadow_normal_bias = 1.5
-	add_child(sun_light)
+	# 2 каскада вместо 4 — вдвое меньше shadow-рендеров.
+	sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun_light.directional_shadow_split_1 = 0.18
+	sun_light.directional_shadow_blend_splits = false
+	# Жёсткие тени: отключаем дорогое PCSS-размытие.
+	sun_light.light_angular_distance = 0.0
+	sun_light.shadow_bias = 0.06
+	sun_light.shadow_normal_bias = 1.1
 
 	# --- Луна ---
+	# Луна даёт только мягкий заполняющий свет — тени от неё не нужны.
 	moon_light = DirectionalLight3D.new()
 	moon_light.name = "MoonLight"
-	moon_light.shadow_enabled = shadows_enabled
+	moon_light.shadow_enabled = false
 	moon_light.directional_shadow_max_distance = shadow_distance
-	moon_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-	moon_light.light_angular_distance = 0.5
-	moon_light.shadow_bias = 0.04
-	moon_light.shadow_normal_bias = 1.8
+	moon_light.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	moon_light.light_angular_distance = 0.0
+	moon_light.shadow_bias = 0.06
+	moon_light.shadow_normal_bias = 1.4
 	moon_light.light_color = moon_color
 	moon_light.light_energy = 0.0
 	add_child(moon_light)
@@ -321,7 +341,13 @@ func _setup_environment() -> void:
 	env.background_mode = Environment.BG_SKY
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_sky_contribution = 0.0
-
+	# Дешёвый тонмаппинг и никаких дорогих экранных эффектов.
+	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.ssao_enabled = false
+	env.ssil_enabled = false
+	env.sdfgi_enabled = false
+	env.volumetric_fog_enabled = false
+	env.glow_enabled = glow_enabled
 	if glow_enabled:
 		env.glow_enabled = true
 		env.glow_intensity = 0.7
@@ -331,8 +357,6 @@ func _setup_environment() -> void:
 			env.set_glow_level(i, 0.0)
 		for i in range(glow_level_count):
 			env.set_glow_level(i, 1.0)
-	else:
-		env.glow_enabled = false
 
 
 # --- Часы ---------------------------------------------------------------
@@ -389,7 +413,15 @@ func _process(delta: float) -> void:
 			current_time += 24.0
 
 	cloud_time += delta * cloud_scroll_speed
-	_update_cycle(delta)
+	# Небо, туман, звёзды и облака меняются медленно: пересчитываем их
+	# 10 раз в секунду вместо каждого кадра и экономим CPU/обновления ресурсов.
+	_visual_timer += delta
+	var interval: float = 1.0 / maxf(environment_update_hz, 1.0)
+	if _visual_timer < interval:
+		return
+	var step := _visual_timer
+	_visual_timer = 0.0
+	_update_cycle(step)
 	_update_clock()
 
 

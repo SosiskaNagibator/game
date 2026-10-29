@@ -56,6 +56,9 @@ var _prop_buttons: Array[Button] = []
 var _prop_button_group := ButtonGroup.new()
 var _preview_prop: Node3D
 var _placed_props: Array[Dictionary] = []
+## Кэш наведения: луч дорогой, проверяем его 10 раз в секунду.
+var _hover_tree_id: int = -1
+var _hover_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -103,6 +106,7 @@ func _process(delta: float) -> void:
 	if _player.is_driving():
 		if _carried_id >= 0:
 			_cancel_carry()
+		_hover_tree_id = -1
 		_marker.visible = false
 		_clear_hint()
 		return
@@ -114,7 +118,14 @@ func _process(delta: float) -> void:
 		)
 		return
 
-	var tree_id := _tree_under_crosshair()
+	# Луч наведения пересчитываем ~10 раз в секунду: за это время прицел
+	# не успевает заметно сдвинуться, а physics-запросов становится в 6 раз меньше.
+	_hover_timer -= delta
+	if _hover_timer <= 0.0:
+		_hover_timer = 0.1
+		_hover_tree_id = _tree_under_crosshair()
+
+	var tree_id := _hover_tree_id
 	if tree_id >= 0:
 		_player.set_hint_override("[F] Переставить дерево")
 		var pos: Vector3 = _vegetation.get_tree_position(tree_id)

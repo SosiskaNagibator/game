@@ -17,21 +17,25 @@ func _ready() -> void:
 		sun.light_color = sun_color
 		sun.light_energy = sun_energy
 		sun.shadow_enabled = true
-		sun.directional_shadow_max_distance = 190.0
-		sun.shadow_bias = 0.04
-		sun.shadow_normal_bias = 1.4
+		# Тени только вокруг игрока: 110 м вместо 190 м и 2 PSSM-каскада.
+		WorldPerformance.configure_sun(sun)
 
 	# Мягче и натуральнее свет: без пересвета, из-за которого трава
 	# выглядела неоново-зелёной, а земля — бледной заливкой.
 	var world_env := get_node_or_null("WorldEnvironment") as WorldEnvironment
 	if world_env != null and world_env.environment != null:
 		var env := world_env.environment
-		env.tonemap_mode = Environment.TONE_MAPPER_AGX
+		WorldPerformance.configure_environment(env)
 		env.tonemap_exposure = 0.98
 		env.ambient_light_energy = ambient_energy
 		env.adjustment_enabled = true
 		env.adjustment_saturation = saturation
 		env.adjustment_contrast = 1.05
+
+	# Сцена уже сгенерировала поселение, ферму и декор: проходим по ним и
+	# убираем тени у мелочи, включаем distance fade у фонарей и т.д.
+	if not Engine.is_editor_hint():
+		WorldPerformance.optimize_world(self)
 
 func _place_start() -> void:
 	var player := get_node_or_null("Player") as Node3D

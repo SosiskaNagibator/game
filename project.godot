@@ -139,4 +139,14 @@ toggle_landscape_editor={
 [rendering]
 
 rendering_device/driver.windows="d3d12"
-anti_aliasing/quality/msaa_3d=1
+; MSAA 2x дорог на слабых GPU, а сглаживание можно получить дешевле.
+anti_aliasing/quality/msaa_3d=0
+; Тени: 2 каскада и карта 2048 вместо 4096 — вдвое меньше трафика/памяти.
+lights_and_shadows/directional_shadow/size=2048
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=1
+lights_and_shadows/positional_shadow/atlas_size=2048
+; LOD-переключение агрессивнее: дальние меши раньше уходят в низкий LOD.
+mesh_lod/lod_change/threshold_pixels=2.0
+; Рендерим 3D в 90% разрешения и растягиваем — заметный выигрыш на слабых GPU.
+scaling_3d/scale=0.9
+
