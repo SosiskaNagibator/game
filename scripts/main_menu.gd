@@ -9,6 +9,7 @@ var settings_panel: PanelContainer
 var brightness_slider: HSlider
 var volume_slider: HSlider
 var fullscreen_toggle: CheckButton
+var antialiasing_option: OptionButton
 var camera: Camera3D
 var lights: Array[OmniLight3D] = []
 var _light_base_energy: Array[float] = []
@@ -30,6 +31,7 @@ func _ready() -> void:
 	brightness_slider = get_node_or_null("Interface/UI/SettingsPanel/Margin/Content/BrightnessSlider") as HSlider
 	volume_slider = get_node_or_null("Interface/UI/SettingsPanel/Margin/Content/VolumeSlider") as HSlider
 	fullscreen_toggle = get_node_or_null("Interface/UI/SettingsPanel/Margin/Content/FullscreenToggle") as CheckButton
+	antialiasing_option = get_node_or_null("Interface/UI/SettingsPanel/Margin/Content/AntiAliasingOption") as OptionButton
 
 	# Фоновая музыка меню должна играть непрерывно, даже если импорт
 	# пересоздан без включённого цикла.
@@ -57,6 +59,12 @@ func _ready() -> void:
 	if fullscreen_toggle:
 		fullscreen_toggle.set_pressed_no_signal(PlayerSettings.fullscreen)
 		fullscreen_toggle.toggled.connect(PlayerSettings.set_fullscreen)
+	if antialiasing_option:
+		antialiasing_option.clear()
+		for label in PlayerSettings.ANTI_ALIASING_LABELS:
+			antialiasing_option.add_item(label)
+		antialiasing_option.select(PlayerSettings.antialiasing)
+		antialiasing_option.item_selected.connect(PlayerSettings.set_antialiasing)
 	PlayerSettings.apply_to_tree()
 
 	for path in ["Warehouse/BayLightLeft", "Warehouse/BayLightCenter", "Warehouse/BayLightRight", "YardSign/SignLight", "PickupLight"]:

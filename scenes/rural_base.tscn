@@ -12,10 +12,10 @@
 [ext_resource type="Script" uid="uid://oenv7eydrp8a" path="res://scripts/tree_mover.gd" id="12_treemover"]
 [ext_resource type="Script" uid="uid://bgxtjh35ltvem" path="res://scripts/settlement.gd" id="13_settlement"]
 [ext_resource type="PackedScene" uid="uid://cf3cgh44h8qxs" path="res://scenes/Decor.tscn" id="14_decor"]
-[ext_resource type="PackedScene" path="res://scenes/CargoBox.tscn" id="15_cargobox"]
+[ext_resource type="PackedScene" uid="uid://kchu6cy0edc4" path="res://scenes/CargoBox.tscn" id="15_cargobox"]
 [ext_resource type="PackedScene" path="res://scenes/checkpoint.tscn" id="15_o1q0b"]
-[ext_resource type="PackedScene" path="res://scenes/warning_zone.tscn" id="16_ir411"]
 [ext_resource type="PackedScene" path="res://scenes/Warehouse.tscn" id="15_warehouse"]
+[ext_resource type="PackedScene" path="res://scenes/warning_zone.tscn" id="16_ir411"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
 sky_top_color = Color(0.2, 0.4, 0.8, 1)
@@ -120,15 +120,13 @@ start_time = 8.0
 [node name="CargoSystem" type="Node3D" parent="." unique_id=2094774591]
 script = ExtResource("11_cargo")
 
-[node name="Warehouse" parent="." instance=ExtResource("15_warehouse")]
+[node name="Warehouse" parent="." unique_id=225367104 instance=ExtResource("15_warehouse")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -220.5, -6.6876307, -167.5)
 
 [node name="Decor" parent="." unique_id=9999999 instance=ExtResource("14_decor")]
 
 [node name="TreeMover" type="Node3D" parent="." unique_id=2094774592]
 script = ExtResource("12_treemover")
-
-
 
 [node name="Checkpoint" parent="." unique_id=1064789749 instance=ExtResource("15_o1q0b")]
 transform = Transform3D(-0.463296, 0, -0.8862036, 0, 1, 0, 0.8862036, 0, -0.463296, -134.48312, -2.1215818, -42.98649)
