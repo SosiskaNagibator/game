@@ -1,14 +1,16 @@
 [gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" path="res://scripts/police_car.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/police_car_ai.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://assets/models/police_car/police_car.glb" id="2_model"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_car"]
 size = Vector3(2.1, 1.55, 5.35)
 
-[node name="PoliceCar" type="StaticBody3D" groups=["police_car"]]
+[node name="PoliceCar" type="CharacterBody3D" groups=["police_car"]]
 collision_layer = 1
-collision_mask = 1
+collision_mask = 3
+floor_snap_length = 0.6
+floor_max_angle = 0.9
 script = ExtResource("1_script")
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
@@ -17,6 +19,21 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -4.077)
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 0)
 shape = SubResource("BoxShape3D_car")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+position = Vector3(0, 0.78, 0)
+radius = 1.2
+height = 1.6
+path_desired_distance = 1.2
+target_desired_distance = 2.0
+path_max_distance = 5.0
+
+[node name="SirenAudio" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+volume_db = -6.0
+unit_size = 10.0
+max_distance = 120.0
+attenuation_model = 0
 
 [node name="RedLight" type="OmniLight3D" parent="."]
 unique_name_in_owner = true

@@ -70,6 +70,8 @@ var _cargo_system: CargoSystem = null
 var _police_car: PoliceCar = null
 var _frozen_vehicle: BaseVehicle = null
 var _frozen_was_frozen: bool = false
+# Погоня уже идёт: КПП больше не начинает проверку при повторном въезде.
+var _chase_active: bool = false
 
 @onready var _zone: Area3D = $InspectionZone
 @onready var _banner: Control = %Banner
@@ -84,7 +86,7 @@ var _frozen_was_frozen: bool = false
 
 func _ready() -> void:
 	add_to_group("police_checkpoints")
-	_police_car = get_node_or_null("PoliceCar") as PoliceCar
+	_police_car = _resolve_police_car()
 	if snap_to_ground:
 		global_position.y = (
 			RuralHeight.terrain_height(global_position.x, global_position.z) + ground_offset
@@ -107,9 +109,12 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _banner_timer > 0.0:
 		_banner_timer = maxf(_banner_timer - delta, 0.0)
-		if _banner_timer <= 0.0 and _state in [State.CLEAN, State.CHASE]:
+		if _banner_timer <= 0.0:
+			# Сообщение о погоне гаснет, но сама погоня продолжается:
+			# состояние CHASE живёт до ареста.
 			_hide_banner()
-			_state = State.IDLE
+			if _state == State.CLEAN:
+				_state = State.IDLE
 
 	match _state:
 		State.WAITING:
@@ -154,7 +159,7 @@ func _on_body_entered(body: Node3D) -> void:
 	var vehicle := body as BaseVehicle
 	if vehicle == null:
 		return
-	if _state == State.ARRESTED or _state == State.CHASE:
+	if _state == State.ARRESTED or _state == State.CHASE or _chase_active:
 		return
 	if vehicle == _passed_vehicle:
 		return
@@ -333,6 +338,7 @@ func _pass_inspection(vehicle: BaseVehicle) -> void:
 
 func _arrest(vehicle: BaseVehicle) -> void:
 	_state = State.ARRESTED
+	_chase_active = false
 	_wanted_level = maxi(_wanted_level, arrest_wanted_level)
 	_show_banner(
 		"КОНТРАБАНДА ОБНАРУЖЕНА!",
@@ -340,6 +346,7 @@ func _arrest(vehicle: BaseVehicle) -> void:
 		COLOR_ALERT
 	)
 	if _police_car != null:
+		_police_car.stop_chase()
 		_police_car.set_siren(true)
 	player_arrested.emit(vehicle, _wanted_level)
 
@@ -382,8 +389,11 @@ func _start_chase(vehicle: BaseVehicle, evasion: bool = false) -> void:
 			COLOR_ALERT
 		)
 	_banner_timer = message_duration
-	if _police_car != null:
-		_police_car.set_siren(true)
+	_chase_active = true
+	var police_car := _resolve_police_car()
+	if police_car != null:
+		# Единственная машина КПП выезжает на перехват — новых машин не спавним.
+		police_car.start_chase(vehicle)
 	chase_started.emit(vehicle, _wanted_level)
 
 	if chase_ends_in_game_over:
@@ -391,6 +401,35 @@ func _start_chase(vehicle: BaseVehicle, evasion: bool = false) -> void:
 		if not is_inside_tree():
 			return
 		_show_game_over("АРЕСТОВАН", "Вы скрылись с полицейского поста.")
+
+
+## Патрульная машина догнала игрока (сигнал PoliceCar.player_caught).
+func _on_player_caught(vehicle: Node3D) -> void:
+	if _state == State.ARRESTED:
+		return
+
+	var caught_vehicle := vehicle as BaseVehicle
+	_state = State.ARRESTED
+	_chase_active = false
+	_wanted_level = maxi(_wanted_level, arrest_wanted_level)
+	_show_banner(
+		"ВАС ЗАДЕРЖАЛИ!",
+		"Патрульная машина остановила вас. Уровень розыска: %d" % _wanted_level,
+		COLOR_ALERT
+	)
+	if _police_car != null:
+		_police_car.stop_chase()
+		_police_car.set_siren(true)
+	player_arrested.emit(caught_vehicle, _wanted_level)
+
+	if not game_over_enabled:
+		_banner_timer = message_duration
+		return
+
+	await get_tree().create_timer(arrest_delay, true, false, true).timeout
+	if not is_inside_tree():
+		return
+	_show_game_over("АРЕСТОВАН", "Полицейская машина догнала вас на дороге.")
 
 
 # --- Проверка груза ---------------------------------------------------------
@@ -462,6 +501,17 @@ func _on_restart_pressed() -> void:
 
 
 # --- Помощники --------------------------------------------------------------
+
+
+## Найти припаркованную машину КПП (единственную в сцене — новых не спавним).
+## Вызывается при старте погони, поэтому машина гарантированно уже в дереве.
+func _resolve_police_car() -> PoliceCar:
+	if _police_car != null and is_instance_valid(_police_car):
+		return _police_car
+	_police_car = get_node_or_null("PoliceCar") as PoliceCar
+	if _police_car != null and not _police_car.player_caught.is_connected(_on_player_caught):
+		_police_car.player_caught.connect(_on_player_caught)
+	return _police_car
 
 
 func _has_vehicle() -> bool:
