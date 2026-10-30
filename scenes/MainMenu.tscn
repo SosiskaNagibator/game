@@ -726,9 +726,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -260.0
-offset_top = -220.0
+offset_top = -280.0
 offset_right = 260.0
-offset_bottom = 220.0
+offset_bottom = 280.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -782,6 +782,18 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.64, 0.68, 0.66, 1)
 theme_override_font_sizes/font_size = 16
 text = "ПОЛНЫЙ ЭКРАН"
+
+[node name="AntiAliasingTitle" type="Label" parent="Interface/UI/SettingsPanel/Margin/Content" unique_id=1138472615]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.64, 0.68, 0.66, 1)
+theme_override_font_sizes/font_size = 16
+text = "СГЛАЖИВАНИЕ"
+
+[node name="AntiAliasingOption" type="OptionButton" parent="Interface/UI/SettingsPanel/Margin/Content" unique_id=1472569348]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.64, 0.68, 0.66, 1)
+theme_override_font_sizes/font_size = 16
 
 [node name="CloseButton" type="Button" parent="Interface/UI/SettingsPanel/Margin/Content" unique_id=1092217803]
 custom_minimum_size = Vector2(0, 46)

@@ -436,13 +436,38 @@ func _get_cargo_system() -> CargoSystem:
 	return _cargo_system
 
 
+## ИСПРАВЛЕННАЯ ФУНКЦИЯ: Теперь она позволяет брать ящики прямо из Area3D кузова.
 func _aimed_cargo_box() -> RigidBody3D:
-	# Сначала обычный луч (ящики на земле), затем «грузовой» — он видит
-	# ящики в кузове сквозь корпус машины.
+	# Сначала обычный луч (ящики на земле).
 	var box := _raycast_cargo_box(_interact_ray)
 	if box != null:
 		return box
-	return _raycast_cargo_box(_cargo_ray)
+		
+	# Затем «грузовой» луч — он видит ящики в кузове сквозь корпус машины.
+	if _cargo_ray != null:
+		_cargo_ray.force_raycast_update()
+		if _cargo_ray.is_colliding():
+			var collider: Object = _cargo_ray.get_collider()
+			
+			# Попали прямо в ящик
+			if collider is RigidBody3D and collider.is_in_group("cargo"):
+				return collider as RigidBody3D
+				
+			# Попали в невидимую зону кузова (Area3D) — ищем ящик рядом с точкой прицела
+			if collider is Area3D and collider.is_in_group("cargo_area"):
+				var point := _cargo_ray.get_collision_point()
+				var vehicle := _get_cargo_vehicle(collider)
+				var cargo := _get_cargo_system()
+				if vehicle != null and cargo != null:
+					# Ищем ближайший слот (даже если он занят)
+					var slot := cargo.find_nearest_slot(vehicle, point, false)
+					if slot >= 0:
+						var occupant := cargo.get_slot_occupant(vehicle, slot)
+						if occupant is RigidBody3D:
+							# Проверяем дистанцию, чтобы не схватить ящик с другого конца кузова
+							if occupant.global_position.distance_to(point) < 1.5:
+								return occupant as RigidBody3D
+	return null
 
 
 func _raycast_cargo_box(ray: RayCast3D) -> RigidBody3D:
@@ -481,8 +506,7 @@ func _get_cargo_vehicle(collider: Object) -> VehicleBody3D:
 		if parent is VehicleBody3D:
 			return parent
 
-	# Загруженный ящик тоже считается частью кузова: по нему можно
-	# навестись и увидеть, что слот занят.
+	# Загруженный ящик тоже считается частью кузова.
 	if collider is RigidBody3D and collider.is_in_group("cargo"):
 		if collider.has_meta("cargo_vehicle"):
 			var vehicle: Variant = collider.get_meta("cargo_vehicle")

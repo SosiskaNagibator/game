@@ -9,14 +9,21 @@ const MAX_BRIGHTNESS := 1.5
 const DEFAULT_BRIGHTNESS := 0.9
 const DEFAULT_VOLUME := 0.8
 
+## Режимы сглаживания. Порядок должен совпадать с порядком в настройках.
+enum AntiAliasing { OFF, FXAA, MSAA_2X, MSAA_4X, TAA }
+const ANTI_ALIASING_LABELS := ["ВЫКЛЮЧЕНО", "FXAA", "MSAA 2X", "MSAA 4X", "TAA"]
+const DEFAULT_ANTI_ALIASING := AntiAliasing.FXAA
+
 signal brightness_changed(value: float)
 signal volume_changed(value: float)
 signal fullscreen_changed(enabled: bool)
+signal antialiasing_changed(mode: int)
 
 ## Текущие значения. Читайте их, чтобы инициализировать элементы UI.
 var brightness := DEFAULT_BRIGHTNESS
 var volume := DEFAULT_VOLUME
 var fullscreen := false
+var antialiasing := DEFAULT_ANTI_ALIASING
 
 ## Запись на диск откладываем, чтобы перетаскивание ползунка
 ## не сохраняло файл десятки раз в секунду.
@@ -70,6 +77,11 @@ func load_settings() -> void:
 		"fullscreen",
 		DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 	))
+	antialiasing = clampi(
+		int(config.get_value("video", "antialiasing", DEFAULT_ANTI_ALIASING)),
+		AntiAliasing.OFF,
+		AntiAliasing.size() - 1
+	)
 
 	_apply_audio()
 	_apply_fullscreen()
@@ -78,6 +90,7 @@ func save_settings() -> void:
 	var config := ConfigFile.new()
 	config.set_value("video", "brightness", brightness)
 	config.set_value("video", "fullscreen", fullscreen)
+	config.set_value("video", "antialiasing", antialiasing)
 	config.set_value("audio", "master_volume", volume)
 	var err := config.save(SETTINGS_PATH)
 	if err != OK:
@@ -109,6 +122,15 @@ func set_fullscreen(enabled: bool) -> void:
 	_request_save()
 	fullscreen_changed.emit(fullscreen)
 
+func set_antialiasing(mode: int) -> void:
+	mode = clampi(mode, AntiAliasing.OFF, AntiAliasing.size() - 1)
+	if mode == antialiasing:
+		return
+	antialiasing = mode
+	apply_antialiasing()
+	_request_save()
+	antialiasing_changed.emit(antialiasing)
+
 ## Применяет все сохранённые настройки к текущему дереву сцен.
 ## Обычно вызывать вручную не нужно: новые сцены и WorldEnvironment
 ## подхватываются автоматически через node_added.
@@ -116,9 +138,34 @@ func apply_to_tree() -> void:
 	_apply_audio()
 	_apply_fullscreen()
 	apply_brightness()
+	apply_antialiasing()
 
 func apply_brightness() -> void:
 	_apply_to_subtree(get_tree().root)
+
+func apply_antialiasing() -> void:
+	var viewport := get_viewport()
+	if viewport == null:
+		# Страховка для вызовов до/вне дерева сцен (например, в тестах).
+		var main_loop := Engine.get_main_loop()
+		if main_loop is SceneTree:
+			viewport = (main_loop as SceneTree).root
+	if viewport == null:
+		return
+	# Сбрасываем все виды сглаживания, затем включаем выбранный.
+	viewport.msaa_2d = Viewport.MSAA_DISABLED
+	viewport.msaa_3d = Viewport.MSAA_DISABLED
+	viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
+	viewport.use_taa = false
+	match antialiasing:
+		AntiAliasing.FXAA:
+			viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA
+		AntiAliasing.MSAA_2X:
+			viewport.msaa_3d = Viewport.MSAA_2X
+		AntiAliasing.MSAA_4X:
+			viewport.msaa_3d = Viewport.MSAA_4X
+		AntiAliasing.TAA:
+			viewport.use_taa = true
 
 func _on_node_added(node: Node) -> void:
 	# Новые WorldEnvironment и камеры могут появиться в любой момент: при смене
