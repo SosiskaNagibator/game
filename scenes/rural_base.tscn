@@ -128,8 +128,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -220.5, -6.6876307, -167.5)
 [node name="TreeMover" type="Node3D" parent="." unique_id=2094774592]
 script = ExtResource("12_treemover")
 
-[node name="Sketchfab_Scene" parent="." unique_id=1125806567 instance=ExtResource("14_8k3il")]
-transform = Transform3D(0.19548778, 0.13601296, -0.97122854, 0.2213259, 0.958668, 0.1788022, 0.95540506, -0.24991173, 0.15730473, -184.41963, -3.2205856, -92.967155)
+
 
 [node name="Checkpoint" parent="." unique_id=1064789749 instance=ExtResource("15_o1q0b")]
 transform = Transform3D(-0.463296, 0, -0.8862036, 0, 1, 0, 0.8862036, 0, -0.463296, -134.48312, -2.1215818, -42.98649)

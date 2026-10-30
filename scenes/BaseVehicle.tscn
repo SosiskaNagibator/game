@@ -368,7 +368,7 @@ script = ExtResource("1_vehicle")
 max_engine_force = 6200.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2008285255]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0.1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2075675, 0.1)
 shape = SubResource("BoxShape3D_body")
 
 [node name="Body" parent="." unique_id=988793985 instance=ExtResource("3_d7o6t")]
@@ -377,7 +377,6 @@ shape = SubResource("BoxShape3D_body")
 collision_layer = 2
 collision_mask = 0
 monitoring = false
-monitorable = true
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="CargoArea" unique_id=1426850103]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.46, 1.66)

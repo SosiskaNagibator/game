@@ -1,7 +1,0 @@
-[gd_scene format=3 uid="uid://wmpjcddhi8oc"]
-
-[ext_resource type="PackedScene" uid="uid://dvnye2e52t82k" path="res://assets/models/old_pickup/old_pickup.glb" id="1_a202f"]
-
-[node name="Node3D" type="Node3D" unique_id=1518820240]
-
-[node name="OldPickup" parent="." unique_id=731462527 instance=ExtResource("1_a202f")]
