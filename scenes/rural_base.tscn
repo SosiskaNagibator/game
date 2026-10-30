@@ -14,6 +14,8 @@
 [ext_resource type="PackedScene" uid="uid://cvc0i5li7qqcx" path="res://assets/models/hippo/hippo.glb" id="14_8k3il"]
 [ext_resource type="PackedScene" uid="uid://cf3cgh44h8qxs" path="res://scenes/Decor.tscn" id="14_decor"]
 [ext_resource type="PackedScene" path="res://scenes/CargoBox.tscn" id="15_cargobox"]
+[ext_resource type="PackedScene" path="res://scenes/checkpoint.tscn" id="15_o1q0b"]
+[ext_resource type="PackedScene" path="res://scenes/warning_zone.tscn" id="16_ir411"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
 sky_top_color = Color(0.2, 0.4, 0.8, 1)
@@ -106,7 +108,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -237.8, -5.416933, -175.42906
 transform = Transform3D(0.92387956, 0, 0.38268343, 0, 1, 0, -0.38268343, 0, 0.92387956, -240, -5.416933, -172.82907)
 
 [node name="CargoBox6" parent="." unique_id=1864205178 instance=ExtResource("15_cargobox")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -237.6, -5.416933, -173.22906)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -215.95923, -5.6327014, -154.96222)
 
 [node name="DayNightCycle" type="Node3D" parent="." unique_id=1938774590 node_paths=PackedStringArray("world_env", "player_or_camera")]
 script = ExtResource("10_st1pv")
@@ -125,3 +127,9 @@ script = ExtResource("12_treemover")
 
 [node name="Sketchfab_Scene" parent="." unique_id=1125806567 instance=ExtResource("14_8k3il")]
 transform = Transform3D(0.19548778, 0.13601296, -0.97122854, 0.2213259, 0.958668, 0.1788022, 0.95540506, -0.24991173, 0.15730473, -184.41963, -3.2205856, -92.967155)
+
+[node name="Checkpoint" parent="." unique_id=1064789749 instance=ExtResource("15_o1q0b")]
+transform = Transform3D(-0.463296, 0, -0.8862036, 0, 1, 0, 0.8862036, 0, -0.463296, -134.48312, -2.1215818, -42.98649)
+
+[node name="WarningZone" parent="." unique_id=1954651195 instance=ExtResource("16_ir411")]
+transform = Transform3D(0.114354074, 0, -0.19277075, 0, 0.21598612, 0, 0.080649555, 0, 0.27333218, -161.36996, 2.0674443, -66.53015)

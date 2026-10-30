@@ -16,6 +16,9 @@ const LAYER_INTERACTION := 2
 
 @export_range(1.0, 500.0, 1.0) var cargo_mass: float = 75.0
 @export_range(0.05, 2.0, 0.01) var model_scale: float = 1.0
+## Контрабандный груз: CargoSystem.has_contraband() вернёт true,
+## пока хотя бы один такой ящик стоит в кузове.
+@export var is_contraband: bool = false
 
 var _model: Node3D = null
 var _collision: CollisionShape3D = null

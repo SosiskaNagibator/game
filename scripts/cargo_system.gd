@@ -66,6 +66,10 @@ class SlotState:
 @export var cargo_value: int = CARGO_VALUE
 ## Масса одного ящика, кг. Каждый погруженный ящик увеличивает массу машины.
 @export_range(1.0, 500.0, 1.0) var cargo_box_mass: float = 75.0
+@export_group("Контрабанда")
+## Тестовый режим: контрабандой считается любой груз в кузове.
+## Выключите, когда понадобится проверять флаг CargoBox.is_contraband.
+@export var contraband_test_mode: bool = true
 
 var _loaded: int = 0
 var _money: int = 0
@@ -77,6 +81,10 @@ var _message_timer: float = 0.0
 
 ## Машина, которую сейчас показывает HUD и обслуживает док.
 var _crate_owner: VehicleBody3D = null
+## Все ящики, стоящие в кузовах прямо сейчас (по всем машинам).
+## Слоты хранят раскладку, а этот список — быстрый доступ к самим ящикам:
+## по нему считается контрабанда и он же чистится при разгрузке.
+var _loaded_boxes: Array[Node3D] = []
 ## Состояние каждого кузова: { "slots": Array[SlotState], "base_mass": float }.
 var _vehicle_states: Dictionary = {}
 var _status_label: Label = null
@@ -368,6 +376,7 @@ func register_box(
 	box.set_meta("cargo_slot", slot_index)
 	box.set_meta("cargo_mass", mass)
 	box.set_meta("cargo_yaw", yaw_offset)
+	_track_box(box)
 
 	_apply_cargo_mass(vehicle)
 	if _crate_owner == null:
@@ -395,6 +404,7 @@ func _unregister_box_internal(box: Node3D, update_focus: bool) -> bool:
 	box.remove_meta("cargo_slot")
 	box.remove_meta("cargo_mass")
 	box.remove_meta("cargo_yaw")
+	_untrack_box(box)
 
 	if not is_instance_valid(vehicle):
 		return false
@@ -420,6 +430,105 @@ func is_box_registered(box: Node3D) -> bool:
 		and box.has_meta("cargo_vehicle")
 		and box.has_meta("cargo_slot")
 	)
+
+
+# --- Контрабанда ------------------------------------------------------------
+
+
+## Есть ли в кузовах контрабандный груз.
+##
+## Пока включён contraband_test_mode, контрабандой считается любой
+## загруженный ящик — это удобно для проверки КПП. Позже достаточно
+## выключить режим в Инспекторе: тогда проверяются флаги CargoBox.is_contraband.
+## vehicle == null — проверить все машины; иначе — только указанную.
+func has_contraband(vehicle: Node3D = null) -> bool:
+	if contraband_test_mode:
+		return get_cargo_count(vehicle) > 0
+	return has_flagged_contraband(vehicle)
+
+
+## Контрабанда по флагам CargoBox.is_contraband (уточнённая проверка).
+func has_flagged_contraband(vehicle: Node3D = null) -> bool:
+	if vehicle != null:
+		var state := _get_state(vehicle, false)
+		if state.is_empty():
+			return false
+		for slot in state["slots"]:
+			if slot == null or slot.occupant == null:
+				continue
+			if slot.occupant.get("is_contraband") == true:
+				return true
+		return false
+
+	_prune_loaded_boxes()
+	for box in _loaded_boxes:
+		if box == null or not is_instance_valid(box):
+			continue
+		# get() безопасен и для автоматических паллет: у них нет свойства,
+		# вернётся null, то есть «не контрабанда».
+		if box.get("is_contraband") == true:
+			return true
+	return false
+
+
+## Сколько контрабандных ящиков сейчас в кузовах.
+func get_contraband_count(vehicle: Node3D = null) -> int:
+	if contraband_test_mode:
+		return get_cargo_count(vehicle)
+
+	var count := 0
+	if vehicle != null:
+		var state := _get_state(vehicle, false)
+		if state.is_empty():
+			return 0
+		for slot in state["slots"]:
+			if slot != null and slot.occupant != null:
+				if slot.occupant.get("is_contraband") == true:
+					count += 1
+		return count
+
+	_prune_loaded_boxes()
+	for box in _loaded_boxes:
+		if box != null and is_instance_valid(box) and box.get("is_contraband") == true:
+			count += 1
+	return count
+
+
+## Сколько ящиков загружено. vehicle == null — по всем машинам сразу.
+func get_cargo_count(vehicle: Node3D = null) -> int:
+	if vehicle == null:
+		_prune_loaded_boxes()
+		return _loaded_boxes.size()
+	return get_loaded_count(vehicle)
+
+
+## Копия списка загруженных ящиков (по всем машинам).
+func get_loaded_boxes() -> Array[Node3D]:
+	_prune_loaded_boxes()
+	var result: Array[Node3D] = []
+	result.assign(_loaded_boxes)
+	return result
+
+
+func _track_box(box: Node3D) -> void:
+	if box == null or not is_instance_valid(box):
+		return
+	_prune_loaded_boxes()
+	if not _loaded_boxes.has(box):
+		_loaded_boxes.append(box)
+
+
+func _untrack_box(box: Node3D) -> void:
+	if box == null:
+		return
+	_loaded_boxes.erase(box)
+
+
+## Убираем ссылки на уже удалённые узлы, чтобы список не копил мусор.
+func _prune_loaded_boxes() -> void:
+	for i in range(_loaded_boxes.size() - 1, -1, -1):
+		if not is_instance_valid(_loaded_boxes[i]):
+			_loaded_boxes.remove_at(i)
 
 
 # --- Внутреннее состояние кузова -------------------------------------------
@@ -499,6 +608,7 @@ func _add_auto_crate(vehicle: VehicleBody3D, slot_index: int) -> void:
 	slot.occupant = crate
 	slot.mass = cargo_box_mass
 	slot.automatic = true
+	_track_box(crate)
 	_apply_cargo_mass(vehicle)
 
 
@@ -521,6 +631,7 @@ func _remove_slot_occupant(vehicle: VehicleBody3D, slot_index: int) -> void:
 	node.remove_meta("cargo_mass")
 	node.remove_meta("cargo_yaw")
 	slot.clear()
+	_untrack_box(node)
 
 	if is_instance_valid(node):
 		node.queue_free()
