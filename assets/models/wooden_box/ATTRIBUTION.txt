@@ -1,8 +1,0 @@
-Low poly wooden box
-===================
-
-Author: alxndlk (https://sketchfab.com/alxndlk)
-Source: https://sketchfab.com/3d-models/low-poly-wooden-box-2fd7e1e818164401a2961dc51ff0796e
-License: CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/)
-
-Used for the pickup truck cargo crates.

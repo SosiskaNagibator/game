@@ -1,0 +1,51 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="Mat_pallet_wood"]
+albedo_color = Color(0.34, 0.25, 0.14, 1)
+roughness = 0.94
+
+[sub_resource type="BoxMesh" id="Mesh_pallet_runner"]
+material = SubResource("Mat_pallet_wood")
+size = Vector3(1.2, 0.08, 0.14)
+
+[sub_resource type="BoxMesh" id="Mesh_pallet_board"]
+material = SubResource("Mat_pallet_wood")
+size = Vector3(1.2, 0.035, 0.155)
+
+[node name="WarehousePallet" type="Node3D"]
+
+[node name="RunnerA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, -0.43)
+mesh = SubResource("Mesh_pallet_runner")
+
+[node name="RunnerB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+mesh = SubResource("Mesh_pallet_runner")
+
+[node name="RunnerC" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0.43)
+mesh = SubResource("Mesh_pallet_runner")
+
+[node name="Board1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0975, -0.42)
+mesh = SubResource("Mesh_pallet_board")
+
+[node name="Board2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0975, -0.25)
+mesh = SubResource("Mesh_pallet_board")
+
+[node name="Board3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0975, -0.08)
+mesh = SubResource("Mesh_pallet_board")
+
+[node name="Board4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0975, 0.08)
+mesh = SubResource("Mesh_pallet_board")
+
+[node name="Board5" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0975, 0.25)
+mesh = SubResource("Mesh_pallet_board")
+
+[node name="Board6" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0975, 0.42)
+mesh = SubResource("Mesh_pallet_board")
