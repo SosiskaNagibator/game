@@ -580,4 +580,3 @@ func get_clock_text() -> String:
 	elif _sun_altitude < 0.18:
 		phase = "СУМЕРКИ"
 	return "День %d   %02d:%02d   %s" % [_day_count, hours, minutes, phase]
-

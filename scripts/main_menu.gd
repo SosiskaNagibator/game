@@ -9,7 +9,6 @@ var settings_panel: PanelContainer
 var brightness_slider: HSlider
 var volume_slider: HSlider
 var fullscreen_toggle: CheckButton
-var world_environment: WorldEnvironment
 var camera: Camera3D
 var lights: Array[OmniLight3D] = []
 var _light_base_energy: Array[float] = []
@@ -31,7 +30,6 @@ func _ready() -> void:
 	brightness_slider = get_node_or_null("Interface/UI/SettingsPanel/Margin/Content/BrightnessSlider") as HSlider
 	volume_slider = get_node_or_null("Interface/UI/SettingsPanel/Margin/Content/VolumeSlider") as HSlider
 	fullscreen_toggle = get_node_or_null("Interface/UI/SettingsPanel/Margin/Content/FullscreenToggle") as CheckButton
-	world_environment = get_node_or_null("WorldEnvironment") as WorldEnvironment
 
 	# Фоновая музыка меню должна играть непрерывно, даже если импорт
 	# пересоздан без включённого цикла.
@@ -48,15 +46,18 @@ func _ready() -> void:
 		exit_button.pressed.connect(_on_exit_pressed)
 	if close_settings_button:
 		close_settings_button.pressed.connect(_on_close_settings_pressed)
+	# Показываем сохранённые настройки и пишем изменения в PlayerSettings,
+	# который сам применяет их и хранит в user://player_settings.cfg.
 	if brightness_slider:
-		brightness_slider.value_changed.connect(_on_brightness_changed)
-		_on_brightness_changed(brightness_slider.value)
+		brightness_slider.value = PlayerSettings.brightness
+		brightness_slider.value_changed.connect(PlayerSettings.set_brightness)
 	if volume_slider:
-		volume_slider.value_changed.connect(_on_volume_changed)
-		_on_volume_changed(volume_slider.value)
+		volume_slider.value = PlayerSettings.volume
+		volume_slider.value_changed.connect(PlayerSettings.set_volume)
 	if fullscreen_toggle:
-		fullscreen_toggle.toggled.connect(_on_fullscreen_toggled)
-		fullscreen_toggle.button_pressed = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+		fullscreen_toggle.set_pressed_no_signal(PlayerSettings.fullscreen)
+		fullscreen_toggle.toggled.connect(PlayerSettings.set_fullscreen)
+	PlayerSettings.apply_to_tree()
 
 	for path in ["Warehouse/BayLightLeft", "Warehouse/BayLightCenter", "Warehouse/BayLightRight", "YardSign/SignLight", "PickupLight"]:
 		var light := get_node_or_null(path) as OmniLight3D
@@ -102,19 +103,51 @@ func _on_close_settings_pressed() -> void:
 		if settings_button:
 			settings_button.grab_focus()
 
-func _on_brightness_changed(value: float) -> void:
-	if world_environment and world_environment.environment:
-		world_environment.environment.adjustment_brightness = value
-
-func _on_volume_changed(value: float) -> void:
-	var master_bus := AudioServer.get_bus_index("Master")
-	if master_bus >= 0:
-		AudioServer.set_bus_volume_db(master_bus, linear_to_db(maxf(value, 0.001)))
-		AudioServer.set_bus_mute(master_bus, is_zero_approx(value))
-
-func _on_fullscreen_toggled(enabled: bool) -> void:
-	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if enabled else DisplayServer.WINDOW_MODE_WINDOWED
-	DisplayServer.window_set_mode(mode)
-
 func _on_exit_pressed() -> void:
 	get_tree().quit()
+
+func _build_star_layer(
+	node_name: String, count: int, size: float, material: StandardMaterial3D
+) -> MultiMeshInstance3D:
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.instance_count = count
+	multimesh.use_colors = true # Включаем поддержку цветов на инстанс
+
+	var star_quad := QuadMesh.new()
+	star_quad.size = Vector2(size, size)
+	star_quad.material = material
+	multimesh.mesh = star_quad
+
+	var radius := 7000.0
+	
+	# Единый цикл, где мы задаем и позицию, и размер, и цвет
+	for i in count:
+		var dir := Vector3(
+			randf_range(-1.0, 1.0),
+			randf_range(0.02, 1.0),
+			randf_range(-1.0, 1.0)
+		).normalized()
+
+		# лёгкий разброс размера
+		var s := randf_range(0.6, 1.4)
+		var basis := Basis.IDENTITY.scaled(Vector3.ONE * s)
+		
+		# Задаем трансформацию (позиция + масштаб)
+		multimesh.set_instance_transform(i, Transform3D(basis, dir * radius))
+
+		# яркость и лёгкий цветовой оттенок (голубые/оранжевые/белые звёзды)
+		var b := randf_range(0.5, 1.0) # яркость/прозрачность
+		var tint := Color(0.8, 0.9, 1.0).lerp(Color(1.0, 0.85, 0.7), randf())
+		
+		# Задаем цвет (включая альфа-канал b)
+		multimesh.set_instance_color(i, Color(tint.r, tint.g, tint.b, b))
+
+	var instance := MultiMeshInstance3D.new()
+	instance.name = node_name
+	instance.multimesh = multimesh
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	instance.extra_cull_margin = 200.0
+	instance.visible = false
+	add_child(instance)
+	return instance

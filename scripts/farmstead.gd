@@ -51,7 +51,7 @@ var _hay_colliders: Array[Dictionary] = []
 
 
 func _ready() -> void:
-	if get_node_or_null("Warehouse") != null:
+	if get_node_or_null("YardGravel") != null:
 		return
 	if snap_to_yard:
 		# Ставим весь двор на площадку базы в чаще: постройки остаются
@@ -63,7 +63,6 @@ func _ready() -> void:
 		)
 	_create_materials()
 	_build_yard()
-	_build_warehouse()
 	if SILOS_ENABLED:
 		_build_silos()
 	_build_loading_dock()
@@ -559,17 +558,7 @@ func _build_cargo_zones() -> void:
 			_box(zones, Vector3(0.9, 0.03, 0.12), corner, _yellow_mat, "LoadCorner")
 			_box(zones, Vector3(0.12, 0.03, 0.9), corner, _yellow_mat, "LoadCorner")
 
-	# Жёлтая разметка зоны разгрузки перед воротами склада.
-	var paint := _standard(Color(0.72, 0.58, 0.16), 0.85)
-	_box(
-		zones, Vector3(6.2, 0.03, 4.4), Vector3(29.0, 0.075, 111.0),
-		paint, "UnloadPaint"
-	)
-	for sx in [-1.0, 1.0]:
-		for sz in [-1.0, 1.0]:
-			var corner := Vector3(29.0 + sx * 3.0, 0.10, 111.0 + sz * 2.1)
-			_box(zones, Vector3(1.0, 0.03, 0.14), corner, _yellow_mat, "UnloadCorner")
-			_box(zones, Vector3(0.14, 0.03, 1.0), corner, _yellow_mat, "UnloadCorner")
+	# Разметка перед воротами склада теперь входит в саму сцену Warehouse.
 
 	# Указатель зоны разгрузки слева от ворот.
 	if SIGNS_ENABLED:
@@ -590,24 +579,8 @@ func _build_collisions() -> void:
 	body.name = "FarmCollision"
 	add_child(body)
 
-	# Склад: плита, стены с проёмами ворот, перекрытие и стеллажи.
-	_static_box(body, Vector3(14.2, 0.3, 16.0), Vector3(29.0, 0.15, 100.0))
-	_static_box(body, Vector3(13.5, 7.0, 0.35), Vector3(29.0, 3.5, 92.5))
-	_static_box(body, Vector3(0.35, 7.0, 15.0), Vector3(22.25, 3.5, 100.0))
-	_static_box(body, Vector3(0.35, 7.0, 15.0), Vector3(35.75, 3.5, 100.0))
-	_static_box(body, Vector3(2.05, 7.0, 0.35), Vector3(23.275, 3.5, 107.5))
-	_static_box(body, Vector3(1.0, 7.0, 0.35), Vector3(29.0, 3.5, 107.5))
-	_static_box(body, Vector3(2.05, 7.0, 0.35), Vector3(34.725, 3.5, 107.5))
-	_static_box(body, Vector3(13.5, 1.6, 0.35), Vector3(29.0, 6.2, 107.5))
-	_static_box(body, Vector3(13.5, 0.4, 15.0), Vector3(29.0, 7.0, 100.0))
-	if RACKS_ENABLED:
-		for rack_x in [-5.35, 5.35]:
-			_static_box(body, Vector3(1.6, 4.4, 11.0), Vector3(29.0 + rack_x, 2.2, 100.0))
-	for door in [-2.6, 2.6]:
-		_static_box(
-			body, Vector3(4.4, 0.14, 3.0),
-			Vector3(29.0 + door, 0.11, 109.5), Vector3(4.7, 0.0, 0.0)
-		)
+	# Склад теперь строится отдельным узлом Warehouse в rural_base.tscn,
+	# поэтому его плита, стены и стеллажи здесь не дублируются.
 	if SILOS_ENABLED:
 		_static_cylinder(body, 2.62, 9.4, Vector3(38.6, 5.0, 96.0))
 		_static_cylinder(body, 2.62, 9.4, Vector3(38.6, 5.0, 105.2))
