@@ -11,7 +11,7 @@ extends Node3D
 ## * Счётчики и подсказки видны в HUD слева сверху.
 ##
 ## Зоны совпадают с разметкой из farmstead.gd.
-
+ 
 const CAPACITY := 6
 const STOP_SPEED := 1.5
 const LOAD_TIME := 1.2
@@ -30,6 +30,9 @@ const CRATE_BOTTOM_LOCAL := -0.030735
 const BED_FLOOR_Y := 0.86
 const BED_CENTER_Z := 1.66
 ## Шаг сетки — по фактической ширине ящика, а не по раздутому AABB.
+# Примерные значения — замените их на те, которые нужны в вашей игре!
+const CRATE_VISUAL_SIZE := 1.0 # Например, ширина ящика (если это float)
+const CRATE_GAP := 0.2 # Например, зазор между ящиками
 const CRATE_ROW_SPACING := CRATE_VISUAL_SIZE + CRATE_GAP
 const CRATE_COLUMN_X := (CRATE_VISUAL_SIZE + CRATE_GAP) * 0.5
 
