@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/cargo_box.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://wxcf830lkjag" path="res://assets/models/wooden_box/woodbox.glb" id="2_model"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cargo"]
+size = Vector3(0.615, 0.615, 0.615)
+
+[node name="CargoBox" type="RigidBody3D" groups=["cargo"]]
+collision_layer = 1
+collision_mask = 1
+mass = 75.0
+continuous_cd = true
+script = ExtResource("1_script")
+cargo_mass = 75.0
+model_scale = 1.0
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_cargo")

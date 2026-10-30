@@ -1,0 +1,35 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/police_car.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://assets/models/police_car/police_car.glb" id="2_model"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_car"]
+size = Vector3(2.1, 1.55, 5.35)
+
+[node name="PoliceCar" type="StaticBody3D" groups=["police_car"]]
+collision_layer = 1
+collision_mask = 1
+script = ExtResource("1_script")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -4.077)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.78, 0)
+shape = SubResource("BoxShape3D_car")
+
+[node name="RedLight" type="OmniLight3D" parent="."]
+unique_name_in_owner = true
+position = Vector3(-0.32, 1.56, -0.25)
+light_color = Color(1, 0.1, 0.06, 1)
+light_energy = 0.0
+shadow_enabled = false
+omni_range = 7.0
+
+[node name="BlueLight" type="OmniLight3D" parent="."]
+unique_name_in_owner = true
+position = Vector3(0.32, 1.56, -0.25)
+light_color = Color(0.12, 0.28, 1, 1)
+light_energy = 0.0
+shadow_enabled = false
+omni_range = 7.0
