@@ -1,0 +1,52 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/props/WarehouseCrate.tscn" id="1_crate"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_contraband_tape"]
+albedo_color = Color(0.62, 0.045, 0.035, 1)
+roughness = 0.55
+emission_enabled = true
+emission = Color(0.85, 0.06, 0.03, 1)
+emission_energy_multiplier = 0.9
+
+[sub_resource type="BoxMesh" id="Mesh_contraband_band"]
+material = SubResource("Mat_contraband_tape")
+size = Vector3(0.9, 0.085, 0.9)
+
+[sub_resource type="BoxMesh" id="Mesh_contraband_strip"]
+material = SubResource("Mat_contraband_tape")
+size = Vector3(0.95, 0.06, 0.02)
+
+[node name="ContrabandCrate" type="Node3D"]
+
+[node name="Crate" parent="." instance=ExtResource("1_crate")]
+
+[node name="BandUpper" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.47, 0)
+mesh = SubResource("Mesh_contraband_band")
+
+[node name="BandLower" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)
+mesh = SubResource("Mesh_contraband_band")
+
+[node name="SealStrip" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.951057, 0.309017, 0, -0.309017, 0.951057, 0, 0, 0, 1, 0, 0.31, 0.45)
+mesh = SubResource("Mesh_contraband_strip")
+
+[node name="ContrabandLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0.452)
+pixel_size = 0.0026
+modulate = Color(0.98, 0.72, 0.65, 1)
+outline_modulate = Color(0.2, 0.02, 0.01, 1)
+text = "CONTRABAND"
+font_size = 38
+outline_size = 8
+
+[node name="SealLabel" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11, 0.452)
+pixel_size = 0.0018
+modulate = Color(0.93, 0.55, 0.45, 1)
+outline_modulate = Color(0.18, 0.02, 0.01, 1)
+text = "SEAL 04-17 BROKEN"
+font_size = 34
+outline_size = 6

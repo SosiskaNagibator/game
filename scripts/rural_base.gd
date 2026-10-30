@@ -36,6 +36,10 @@ func _ready() -> void:
 	# убираем тени у мелочи, включаем distance fade у фонарей и т.д.
 	if not Engine.is_editor_hint():
 		WorldPerformance.optimize_world(self)
+		# Восстанавливаем сохранённые настройки игрока (яркость, звук, экран).
+		var player_settings := get_node_or_null("/root/PlayerSettings")
+		if player_settings != null:
+			player_settings.apply_to_tree()
 
 func _place_start() -> void:
 	var player := get_node_or_null("Player") as Node3D

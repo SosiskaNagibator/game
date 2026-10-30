@@ -1,0 +1,150 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/props/WarehouseCrate.tscn" id="1_crate"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_rack_steel"]
+albedo_color = Color(0.17, 0.2, 0.22, 1)
+metallic = 0.65
+roughness = 0.45
+
+[sub_resource type="StandardMaterial3D" id="Mat_rack_deck"]
+albedo_color = Color(0.24, 0.2, 0.16, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="Mesh_rack_upright"]
+material = SubResource("Mat_rack_steel")
+size = Vector3(0.1, 3.6, 0.1)
+
+[sub_resource type="BoxMesh" id="Mesh_rack_beam"]
+material = SubResource("Mat_rack_steel")
+size = Vector3(4.1, 0.11, 0.07)
+
+[sub_resource type="BoxMesh" id="Mesh_rack_deck"]
+material = SubResource("Mat_rack_deck")
+size = Vector3(1.98, 0.035, 1.05)
+
+[sub_resource type="StandardMaterial3D" id="Mat_plastic_bin"]
+albedo_color = Color(0.11, 0.24, 0.26, 1)
+roughness = 0.55
+
+[sub_resource type="BoxMesh" id="Mesh_plastic_bin"]
+material = SubResource("Mat_plastic_bin")
+size = Vector3(0.68, 0.42, 0.68)
+
+[sub_resource type="StandardMaterial3D" id="Mat_shrink_wrap"]
+albedo_color = Color(0.52, 0.57, 0.58, 1)
+metallic = 0.12
+roughness = 0.22
+
+[sub_resource type="BoxMesh" id="Mesh_wrapped_pallet"]
+material = SubResource("Mat_shrink_wrap")
+size = Vector3(1.05, 0.95, 0.95)
+
+[node name="WarehouseRack" type="Node3D"]
+
+[node name="UprightFrontLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.05, 1.8, 0.52)
+mesh = SubResource("Mesh_rack_upright")
+
+[node name="UprightFrontRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.05, 1.8, 0.52)
+mesh = SubResource("Mesh_rack_upright")
+
+[node name="UprightBackLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.05, 1.8, -0.52)
+mesh = SubResource("Mesh_rack_upright")
+
+[node name="UprightBackRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.05, 1.8, -0.52)
+mesh = SubResource("Mesh_rack_upright")
+
+[node name="UprightFrontCenter" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0.52)
+mesh = SubResource("Mesh_rack_upright")
+
+[node name="UprightBackCenter" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, -0.52)
+mesh = SubResource("Mesh_rack_upright")
+
+[node name="BeamLowFront" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0.5)
+mesh = SubResource("Mesh_rack_beam")
+
+[node name="BeamLowBack" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, -0.5)
+mesh = SubResource("Mesh_rack_beam")
+
+[node name="BeamMidFront" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0.5)
+mesh = SubResource("Mesh_rack_beam")
+
+[node name="BeamMidBack" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -0.5)
+mesh = SubResource("Mesh_rack_beam")
+
+[node name="BeamTopFront" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.65, 0.5)
+mesh = SubResource("Mesh_rack_beam")
+
+[node name="BeamTopBack" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.65, -0.5)
+mesh = SubResource("Mesh_rack_beam")
+
+[node name="DeckLowLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.025, 0.4225, 0)
+mesh = SubResource("Mesh_rack_deck")
+
+[node name="DeckLowRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.025, 0.4225, 0)
+mesh = SubResource("Mesh_rack_deck")
+
+[node name="DeckMidLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.025, 1.5725, 0)
+mesh = SubResource("Mesh_rack_deck")
+
+[node name="DeckMidRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.025, 1.5725, 0)
+mesh = SubResource("Mesh_rack_deck")
+
+[node name="DeckTopLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.025, 2.7225, 0)
+mesh = SubResource("Mesh_rack_deck")
+
+[node name="DeckTopRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.025, 2.7225, 0)
+mesh = SubResource("Mesh_rack_deck")
+
+[node name="CrateLowA" parent="." instance=ExtResource("1_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.45, 0.44, 0)
+
+[node name="CrateLowB" parent="." instance=ExtResource("1_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.55, 0.44, 0)
+
+[node name="CrateLowC" parent="." instance=ExtResource("1_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 0.44, 0)
+
+[node name="CrateLowD" parent="." instance=ExtResource("1_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.45, 0.44, 0)
+
+[node name="CrateMidA" parent="." instance=ExtResource("1_crate")]
+transform = Transform3D(0.997564, 0, 0.069756, 0, 1, 0, -0.069756, 0, 0.997564, -1.45, 1.59, 0)
+
+[node name="CrateMidB" parent="." instance=ExtResource("1_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.55, 1.59, 0)
+
+[node name="CrateMidC" parent="." instance=ExtResource("1_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.55, 1.59, 0)
+
+[node name="CrateMidD" parent="." instance=ExtResource("1_crate")]
+transform = Transform3D(0.85, 0, 0, 0, 0.9, 0, 0, 0, 0.85, 1.45, 1.59, 0.04)
+
+[node name="CrateTopA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.05, 2.74, 0)
+mesh = SubResource("Mesh_wrapped_pallet")
+
+[node name="CrateTopB" parent="." instance=ExtResource("1_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 2.74, 0)
+
+[node name="CrateTopSmall" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.55, 2.74, 0.05)
+mesh = SubResource("Mesh_plastic_bin")

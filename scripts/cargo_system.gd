@@ -24,11 +24,7 @@ const CARGO_VALUE := 150
 const CRATE_SCENE: PackedScene = preload(
 	"res://assets/models/wooden_box/woodbox.glb"
 )
-const CRATE_SCALE := 1.0
-## Реальная ширина куба в метрах при CRATE_SCALE = 1.0.
-const CRATE_VISUAL_SIZE := 0.6147
-## Зазор между ящиками, чтобы они не слипались визуально.
-const CRATE_GAP := 0.025
+const CRATE_SCALE := 1
 ## Нижняя грань модели в её локальных координатах (пивот у центра по X/Z).
 const CRATE_BOTTOM_LOCAL := -0.030735
 const BED_FLOOR_Y := 0.86
